@@ -1,3 +1,6 @@
+
+console.log('hecc:lottie start');
+
 (typeof navigator !== "undefined") && (function(root, factory) {
     if (typeof define === "function" && define.amd) {
         define(function() {
@@ -12346,3 +12349,5 @@ var readyStateCheckInterval = setInterval(checkReady, 100);
 
 return lottie;
 }));
+
+console.log('hecc:lottie end');

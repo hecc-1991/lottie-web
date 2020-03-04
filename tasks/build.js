@@ -53,6 +53,10 @@ const scripts = [
 		builds: defaultBuilds
 	},
 	{
+		src: 'js/3rd_party/canvaskit.js',
+		builds: defaultBuilds
+	},
+	{
 		src: 'js/utils/animationFramePolyFill.js',
 		builds: defaultBuilds
 	},
@@ -211,6 +215,10 @@ const scripts = [
 	{
 		src: 'js/renderers/CanvasRenderer.js',
 		builds: ['full','canvas','canvas_light','canvas_worker']
+	},
+	{
+		src: 'js/renderers/SkiaCanvasRenderer.js',
+		builds: ['full']
 	},
 	{
 		src: 'js/renderers/CanvasRendererWorkerOverride.js',
@@ -690,6 +698,13 @@ function noop(code) {
 function buildVersions(scripts) {
 	return new Promise((resolve, reject) => {
 		let versions = [
+		
+		{
+			fileName: 'lottie_skia.js',
+			build: 'full',
+			process: noop
+		}
+		/* 
 		{
 			fileName: 'lottie.js',
 			build: 'full',
@@ -769,7 +784,8 @@ function buildVersions(scripts) {
 			fileName: 'lottie_light_html.min.js',
 			build: 'html_light',
 			process: uglifyCode
-		}];
+		} */
+	];
 
 		if (buildReducedVersion) {
 			versions = versions.splice(0,1);
