@@ -7676,6 +7676,10 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         this.animationItem.container = createTag('canvas');
         this.animationItem.container.style.width = '100%';
         this.animationItem.container.style.height = '100%';
+
+        this.animationItem.container.setAttribute('width', this.animationItem.wrapper.style.width);
+        this.animationItem.container.setAttribute('height', this.animationItem.wrapper.style.height);
+
         //this.animationItem.container.style.transform = 'translate3d(0,0,0)';
         //this.animationItem.container.style.webkitTransform = 'translate3d(0,0,0)';
         this.animationItem.container.style.transformOrigin = this.animationItem.container.style.mozTransformOrigin = this.animationItem.container.style.webkitTransformOrigin = this.animationItem.container.style['-webkit-transform'] = "0px 0px 0px";
@@ -7783,7 +7787,6 @@ SkiaCanvasRenderer.prototype.updateContainerSize = function () {
         }
     }*/
 
-    // 矩阵变换有bug
     this.ctxTransform(this.transformCanvas.props);
 
     this.skcanvas.clipRect(this.canvasKit.XYWHRect(0,0,this.transformCanvas.w,this.transformCanvas.h), this.canvasKit.ClipOp.Intersect, true);
@@ -12465,8 +12468,9 @@ SkiaSolidElement.prototype.renderInnerContent = function() {
 
     //skia solid render
     const paint = new this.canvasKit.SkPaint();
-    paint.setStyle(this.canvasKit.PaintStyle.Fill);
     paint.setColor(ColorUtil.parseColor(this.canvasKit,this.data.sc));
+    paint.setStyle(this.canvasKit.PaintStyle.Fill);
+    paint.setAntiAlias(true);
     this.skcanvas.drawRect(this.canvasKit.XYWHRect(0, 0, this.data.sw, this.data.sh), paint);
 };
 function SkiaTextElement(data, globalData, comp){
