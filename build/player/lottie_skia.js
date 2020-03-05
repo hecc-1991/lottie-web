@@ -7383,7 +7383,7 @@ CanvasRenderer.prototype.show = function(){
     this.animationItem.container.style.display = 'block';
 };
 
-function SkiaCanvasRenderer(animationItem, canvasKit,config) {
+function SkiaCanvasRenderer(animationItem, canvasKit, config) {
     this.canvasKit = canvasKit;
     this.animationItem = animationItem;
     this.renderConfig = {
@@ -7437,12 +7437,65 @@ SkiaCanvasRenderer.prototype.createSolid = function (data) {
 
 SkiaCanvasRenderer.prototype.createNull = SVGRenderer.prototype.createNull;
 
+/* 
+替换绘图的当前转换矩阵
+a	c	e
+b	d	f
+0	0	1
+a	水平缩放绘图。
+b	水平倾斜绘图。
+c	垂直倾斜绘图。
+d	垂直缩放绘图。
+e	水平移动绘图。
+f	垂直移动绘图。
+ */
+SkiaCanvasRenderer.prototype.transform = function (a, b, c, d, e, f) {
+    const mat33 = [
+        a, c, e,
+        b, d, f,
+        0, 0, 1];
+    this.skcanvas.concat(mat33);
+};
+
+// 检查数字数组是否有效
+SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
+    for (var b = 0; b < arr.length; b++)
+        if (void 0 !== arr[b] && !Number.isFinite(arr[b]))
+            return false;
+    return true;
+}
+
+// 将当前转换重置为单位矩阵。
+SkiaCanvasRenderer.prototype.resetTransform = function () {
+    let mat = this.skcanvas.getTotalMatrix();
+    mat = this.canvasKit.SkMatrix.invert(mat);
+    this.skcanvas.concat(mat);
+};
+
+/* 
+将当前转换重置为单位矩阵。然后运行 transform()。
+a	c	e
+b	d	f
+0	0	1
+a	水平缩放绘图。
+b	水平倾斜绘图。
+c	垂直倾斜绘图。
+d	垂直缩放绘图。
+e	水平移动绘图。
+f	垂直移动绘图。
+ */
+SkiaCanvasRenderer.prototype.setTransform = function (a, b, c, d, e, f) {
+    this.checkNumer(arguments) && (
+        this.resetTransform(),
+        this.transform(a, b, c, d, e, f));
+};
+
 SkiaCanvasRenderer.prototype.ctxTransform = function (props) {
     if (props[0] === 1 && props[1] === 0 && props[4] === 0 && props[5] === 1 && props[12] === 0 && props[13] === 0) {
         return;
     }
     if (!this.renderConfig.clearCanvas) {
-        this.canvasContext.transform(props[0], props[1], props[4], props[5], props[12], props[13]);
+        this.transform(props[0], props[1], props[4], props[5], props[12], props[13]);
         return;
     }
     this.transformMat.cloneFromProps(props);
@@ -7451,7 +7504,7 @@ SkiaCanvasRenderer.prototype.ctxTransform = function (props) {
     //this.contextData.cTr.transform(props[0],props[1],props[2],props[3],props[4],props[5],props[6],props[7],props[8],props[9],props[10],props[11],props[12],props[13],props[14],props[15]);
     this.contextData.cTr.cloneFromProps(this.transformMat.props);
     var trProps = this.contextData.cTr.props;
-    this.canvasContext.setTransform(trProps[0], trProps[1], trProps[4], trProps[5], trProps[12], trProps[13]);
+    this.setTransform(trProps[0], trProps[1], trProps[4], trProps[5], trProps[12], trProps[13]);
 };
 
 SkiaCanvasRenderer.prototype.ctxOpacity = function (op) {
@@ -7459,20 +7512,20 @@ SkiaCanvasRenderer.prototype.ctxOpacity = function (op) {
         return;
     }*/
     if (!this.renderConfig.clearCanvas) {
-        this.canvasContext.globalAlpha *= op < 0 ? 0 : op;
+        //this.canvasContext.globalAlpha *= op < 0 ? 0 : op;
         this.globalData.currentGlobalAlpha = this.contextData.cO;
         return;
     }
     this.contextData.cO *= op < 0 ? 0 : op;
     if (this.globalData.currentGlobalAlpha !== this.contextData.cO) {
-        this.canvasContext.globalAlpha = this.contextData.cO;
+        //this.canvasContext.globalAlpha = this.contextData.cO;
         this.globalData.currentGlobalAlpha = this.contextData.cO;
     }
 };
 
 SkiaCanvasRenderer.prototype.reset = function () {
     if (!this.renderConfig.clearCanvas) {
-        this.canvasContext.restore();
+        this.skcanvas.restore();
         return;
     }
     this.contextData.reset();
@@ -7480,11 +7533,11 @@ SkiaCanvasRenderer.prototype.reset = function () {
 
 SkiaCanvasRenderer.prototype.save = function (actionFlag) {
     if (!this.renderConfig.clearCanvas) {
-        this.canvasContext.save();
+        this.skcanvas.save();
         return;
     }
     if (actionFlag) {
-        this.canvasContext.save();
+        this.skcanvas.save();
     }
     var props = this.contextData.cTr.props;
     if (this.contextData._length <= this.contextData.cArrPos) {
@@ -7500,11 +7553,11 @@ SkiaCanvasRenderer.prototype.save = function (actionFlag) {
 
 SkiaCanvasRenderer.prototype.restore = function (actionFlag) {
     if (!this.renderConfig.clearCanvas) {
-        this.canvasContext.restore();
+        this.skcanvas.restore();
         return;
     }
     if (actionFlag) {
-        this.canvasContext.restore();
+        this.skcanvas.restore();
         this.globalData.blendMode = 'source-over';
     }
     this.contextData.cArrPos -= 1;
@@ -7513,11 +7566,11 @@ SkiaCanvasRenderer.prototype.restore = function (actionFlag) {
     for (i = 0; i < 16; i += 1) {
         arr[i] = popped[i];
     }
-    this.canvasContext.setTransform(popped[0], popped[1], popped[4], popped[5], popped[12], popped[13]);
+    this.setTransform(popped[0], popped[1], popped[4], popped[5], popped[12], popped[13]);
     popped = this.contextData.savedOp[this.contextData.cArrPos];
     this.contextData.cO = popped;
     if (this.globalData.currentGlobalAlpha !== popped) {
-        this.canvasContext.globalAlpha = popped;
+        //this.canvasContext.globalAlpha = popped;
         this.globalData.currentGlobalAlpha = popped;
     }
 };
@@ -7531,7 +7584,6 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         //this.animationItem.container.style.webkitTransform = 'translate3d(0,0,0)';
         this.animationItem.container.style.transformOrigin = this.animationItem.container.style.mozTransformOrigin = this.animationItem.container.style.webkitTransformOrigin = this.animationItem.container.style['-webkit-transform'] = "0px 0px 0px";
         this.animationItem.wrapper.appendChild(this.animationItem.container);
-        
         if (this.renderConfig.className) {
             this.animationItem.container.setAttribute('class', this.renderConfig.className);
         }
@@ -7540,15 +7592,15 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         } else {
             this.animationItem.container.setAttribute('id', 'skia');
         }
-        
+
         this.surface = this.canvasKit.MakeCanvasSurface(this.animationItem.container.id);
         if (!(this.surface)) {
             throw 'Could not make surface';
         }
         this.skcanvas = this.surface.getCanvas();
-        
+
     } else {
-        this.canvasContext = this.renderConfig.context;
+        //this.canvasContext = this.renderConfig.context;
     }
     this.data = animData;
     this.layers = animData.layers;
@@ -7580,8 +7632,8 @@ SkiaCanvasRenderer.prototype.updateContainerSize = function () {
         this.animationItem.container.setAttribute('width', elementWidth * this.renderConfig.dpr);
         this.animationItem.container.setAttribute('height', elementHeight * this.renderConfig.dpr);
     } else {
-        elementWidth = this.canvasContext.canvas.width * this.renderConfig.dpr;
-        elementHeight = this.canvasContext.canvas.height * this.renderConfig.dpr;
+        elementWidth = this.surface.width * this.renderConfig.dpr;
+        elementHeight = this.surface.height * this.renderConfig.dpr;
     }
     var elementRel, animationRel;
     if (this.renderConfig.preserveAspectRatio.indexOf('meet') !== -1 || this.renderConfig.preserveAspectRatio.indexOf('slice') !== -1) {
@@ -7634,10 +7686,8 @@ SkiaCanvasRenderer.prototype.updateContainerSize = function () {
         }
     }*/
     this.ctxTransform(this.transformCanvas.props);
-    this.canvasContext.beginPath();
-    this.canvasContext.rect(0, 0, this.transformCanvas.w, this.transformCanvas.h);
-    this.canvasContext.closePath();
-    this.canvasContext.clip();
+
+    this.skcanvas.clipRect(this.canvasKit.XYWHRect(30, 30, 200, 200), this.canvasKit.ClipOp.Intersect, true);
 
     this.renderFrame(this.renderedFrame, true);
 };
@@ -7653,10 +7703,18 @@ SkiaCanvasRenderer.prototype.destroy = function () {
         }
     }
     this.elements.length = 0;
-    this.globalData.canvasContext = null;
+    this.globalData.skcanvas = null;
     this.animationItem.container = null;
     this.destroyed = true;
 };
+
+// 在给定的矩形内清除指定的像素
+SkiaCanvasRenderer.prototype.clearRect = function (x, y, width, height) {
+    const paint = new this.canvasKit.SkPaint();
+    paint.setStyle(this.canvasKit.PaintStyle.Fill);
+    paint.setBlendMode(this.canvasKit.BlendMode.Clear);
+    this.skcanvas.drawRect(this.canvasKit.XYWHRect(x, y, width, height), paint);
+}
 
 SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {
     if ((this.renderedFrame === num && this.renderConfig.clearCanvas === true && !forceRender) || this.destroyed || num === -1) {
@@ -7682,7 +7740,7 @@ SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {
     }
     if (this.globalData._mdf) {
         if (this.renderConfig.clearCanvas === true) {
-            this.canvasContext.clearRect(0, 0, this.transformCanvas.w, this.transformCanvas.h);
+            this.clearRect(0, 0, this.transformCanvas.w, this.transformCanvas.h);
         } else {
             this.save();
         }
@@ -11555,6 +11613,957 @@ function CVEffects() {
 
 }
 CVEffects.prototype.renderFrame = function(){};
+function SkiaContextData() {
+	this.saved = [];
+    this.cArrPos = 0;
+    this.cTr = new Matrix();
+    this.cO = 1;
+    var i, len = 15;
+    this.savedOp = createTypedArray('float32', len);
+    for(i=0;i<len;i+=1){
+        this.saved[i] = createTypedArray('float32', 16);
+    }
+    this._length = len;
+}
+
+SkiaContextData.prototype.duplicate = function() {
+	var newLength = this._length * 2;
+	var currentSavedOp = this.savedOp;
+    this.savedOp = createTypedArray('float32', newLength);
+    this.savedOp.set(currentSavedOp);
+    var i = 0;
+    for(i = this._length; i < newLength; i += 1) {
+        this.saved[i] = createTypedArray('float32', 16);
+    }
+    this._length = newLength;
+};
+
+SkiaContextData.prototype.reset = function() {
+	this.cArrPos = 0;
+	this.cTr.reset();
+    this.cO = 1;
+};
+function SkiaBaseElement(){
+}
+
+SkiaBaseElement.prototype = {
+    createElements: function(){},
+    initRendererElement: function(){},
+    createContainerElements: function(){
+        this.skcanvas = this.globalData.skcanvas;
+        this.renderableEffectsManager = new CVEffects(this);
+    },
+    createContent: function(){},
+    setBlendMode: function(){
+        var globalData = this.globalData;
+        if(globalData.blendMode !== this.data.bm) {
+            globalData.blendMode = this.data.bm;
+            var blendModeValue = getBlendMode(this.data.bm);
+            // 混合模式，功能待添加
+            //globalData.canvasContext.globalCompositeOperation = blendModeValue;
+            globalData.blendModeValue = blendModeValue;
+        }
+    },
+    createRenderableComponents: function(){
+        this.maskManager = new CVMaskElement(this.data, this);
+    },
+    hideElement: function(){
+        if (!this.hidden && (!this.isInRange || this.isTransparent)) {
+            this.hidden = true;
+        }
+    },
+    showElement: function(){
+        if (this.isInRange && !this.isTransparent){
+            this.hidden = false;
+            this._isFirstFrame = true;
+            this.maskManager._isFirstFrame = true;
+        }
+    },
+    renderFrame: function() {
+        if (this.hidden || this.data.hd) {
+            return;
+        }
+        this.renderTransform();
+        this.renderRenderable();
+        this.setBlendMode();
+        var forceRealStack = this.data.ty === 0;
+        this.globalData.renderer.save(forceRealStack);
+        this.globalData.renderer.ctxTransform(this.finalTransform.mat.props);
+        this.globalData.renderer.ctxOpacity(this.finalTransform.mProp.o.v);
+        this.renderInnerContent();
+        this.globalData.renderer.restore(forceRealStack);
+        if(this.maskManager.hasMasks) {
+            this.globalData.renderer.restore(true);
+        }
+        if (this._isFirstFrame) {
+            this._isFirstFrame = false;
+        }
+    },
+    destroy: function(){
+        this.canvasContext = null;
+        this.data = null;
+        this.globalData = null;
+        this.maskManager.destroy();
+    },
+    mHelper: new Matrix()
+};
+SkiaBaseElement.prototype.hide = SkiaBaseElement.prototype.hideElement;
+SkiaBaseElement.prototype.show = SkiaBaseElement.prototype.showElement;
+
+function SkiaImageElement(data, globalData, comp){
+    this.assetData = globalData.getAssetData(data.refId);
+    this.img = globalData.imageLoader.getImage(this.assetData);
+    this.initElement(data,globalData,comp);
+}
+extendPrototype([BaseElement, TransformElement, SkiaBaseElement, HierarchyElement, FrameElement, RenderableElement], SkiaImageElement);
+
+SkiaImageElement.prototype.initElement = SVGShapeElement.prototype.initElement;
+SkiaImageElement.prototype.prepareFrame = IImageElement.prototype.prepareFrame;
+
+SkiaImageElement.prototype.createContent = function(){
+
+    if (this.img.width && (this.assetData.w !== this.img.width || this.assetData.h !== this.img.height)) {
+
+        // skia img render
+        const w = this.assetData.w;
+        const h = this.assetData.h;
+        let canvas = this.canvasKit.MakeCanvas(w,h);
+        var imgW = this.img.width;
+        var imgH = this.img.height;
+        var imgRel = imgW / imgH;
+        var canvasRel = this.assetData.w/this.assetData.h;
+        var widthCrop, heightCrop;
+        var par = this.assetData.pr || this.globalData.renderConfig.imagePreserveAspectRatio;
+        if((imgRel > canvasRel && par === 'xMidYMid slice') || (imgRel < canvasRel && par !== 'xMidYMid slice')) {
+            heightCrop = imgH;
+            widthCrop = heightCrop*canvasRel;
+        } else {
+            widthCrop = imgW;
+            heightCrop = widthCrop/canvasRel;
+        }
+        canvas.drawImage(this.img,(imgW-widthCrop)/2,(imgH-heightCrop)/2,widthCrop,heightCrop,0,0,this.assetData.w,this.assetData.h);
+        this.img.src = canvas.toDataURL();
+    }
+
+};
+
+SkiaImageElement.prototype.renderInnerContent = function(parentMatrix){
+    this.skcanvas.drawImage(this.img,0,0,null);
+};
+
+SkiaImageElement.prototype.destroy = function(){
+    this.img = null;
+};
+function SkiaCompElement(data, globalData, comp) {
+    this.completeLayers = false;
+    this.layers = data.layers;
+    this.pendingElements = [];
+    this.elements = createSizedArray(this.layers.length);
+    this.initElement(data, globalData, comp);
+    this.tm = data.tm ? PropertyFactory.getProp(this,data.tm,0,globalData.frameRate, this) : {_placeholder:true};
+}
+
+extendPrototype([SkiaCanvasRenderer, ICompElement, SkiaBaseElement], SkiaCompElement);
+
+SkiaCompElement.prototype.renderInnerContent = function() {
+    const path = new this.canvasKit.SkPath();
+    path.moveTo(0,0);
+    path.lineTo(this.data.w,0);
+    path.lineTo(this.data.w, this.data.h);
+    path.lineTo(0, this.data.h);
+    path.lineTo(0,0);
+    this.skcanvas.clipPath(path,this.canvasKit.ClipOp.Intersect,true);
+    var i,len = this.layers.length;
+    for( i = len - 1; i >= 0; i -= 1 ){
+        if(this.completeLayers || this.elements[i]){
+            this.elements[i].renderFrame();
+        }
+    }
+};
+
+SkiaCompElement.prototype.destroy = function(){
+    var i,len = this.layers.length;
+    for( i = len - 1; i >= 0; i -= 1 ){
+        if(this.elements[i]) {
+            this.elements[i].destroy();
+        }
+    }
+    this.layers = null;
+    this.elements = null;
+};
+
+function SkiaMaskElement(data,element){
+    this.data = data;
+    this.element = element;
+    this.masksProperties = this.data.masksProperties || [];
+    this.viewData = createSizedArray(this.masksProperties.length);
+    var i, len = this.masksProperties.length, hasMasks = false;
+    for (i = 0; i < len; i++) {
+        if(this.masksProperties[i].mode !== 'n'){
+            hasMasks = true;
+        }
+        this.viewData[i] = ShapePropertyFactory.getShapeProp(this.element,this.masksProperties[i],3);
+    }
+    this.hasMasks = hasMasks;
+    if(hasMasks) {
+        this.element.addRenderableComponent(this);
+    }
+}
+
+SkiaMaskElement.prototype.renderFrame = function () {
+    if(!this.hasMasks){
+        return;
+    }
+    var transform = this.element.finalTransform.mat;
+    var i, len = this.masksProperties.length;
+    var pt,pts,data;
+    const path = new this.canvasKit.SkPath();
+    for (i = 0; i < len; i++) {
+        if(this.masksProperties[i].mode !== 'n'){
+            if (this.masksProperties[i].inv) {
+                path.moveTo(0, 0);
+                path.lineTo(this.element.globalData.compSize.w, 0);
+                path.lineTo(this.element.globalData.compSize.w, this.element.globalData.compSize.h);
+                path.lineTo(0, this.element.globalData.compSize.h);
+                path.lineTo(0, 0);
+            }
+            data = this.viewData[i].v;
+            pt = transform.applyToPointArray(data.v[0][0],data.v[0][1],0);
+            path.moveTo(pt[0], pt[1]);
+            var j, jLen = data._length;
+            for (j = 1; j < jLen; j++) {
+                pts = transform.applyToTriplePoints(data.o[j - 1], data.i[j], data.v[j]);
+                path.cubicTo(pts[0], pts[1], pts[2], pts[3], pts[4], pts[5]);
+            }
+            pts = transform.applyToTriplePoints(data.o[j - 1], data.i[0], data.v[0]);
+            path.cubicTo(pts[0], pts[1], pts[2], pts[3], pts[4], pts[5]);
+        }
+    }
+    this.element.globalData.renderer.save(true);
+    this.skcanvas.clipPath(path,this.canvasKit.ClipOp.Intersect,true)
+};
+
+SkiaMaskElement.prototype.getMaskProperty = MaskElement.prototype.getMaskProperty;
+
+SkiaMaskElement.prototype.destroy = function(){
+    this.element = null;
+};
+function SkiaShapeElement(data, globalData, comp) {
+    this.shapes = [];
+    this.shapesData = data.shapes;
+    this.stylesList = [];
+    this.itemsData = [];
+    this.prevViewData = [];
+    this.shapeModifiers = [];
+    this.processedElements = [];
+    this.transformsManager = new ShapeTransformManager();
+    this.initElement(data, globalData, comp);
+}
+
+extendPrototype([BaseElement, TransformElement, SkiaBaseElement, IShapeElement, HierarchyElement, FrameElement, RenderableElement], SkiaShapeElement);
+
+SkiaShapeElement.prototype.initElement = RenderableDOMElement.prototype.initElement;
+
+SkiaShapeElement.prototype.transformHelper = { opacity: 1, _opMdf: false };
+
+SkiaShapeElement.prototype.dashResetter = [];
+
+SkiaShapeElement.prototype.createContent = function () {
+    this.searchShapes(this.shapesData, this.itemsData, this.prevViewData, true, []);
+};
+
+SkiaShapeElement.prototype.createStyleElement = function (data, transforms) {
+    var styleElem = {
+        data: data,
+        type: data.ty,
+        preTransforms: this.transformsManager.addTransformSequence(transforms),
+        transforms: [],
+        elements: [],
+        closed: data.hd === true
+    };
+    var elementData = {};
+    if (data.ty == 'fl' || data.ty == 'st') {
+        elementData.c = PropertyFactory.getProp(this, data.c, 1, 255, this);
+        if (!elementData.c.k) {
+            styleElem.co = 'rgb(' + bm_floor(elementData.c.v[0]) + ',' + bm_floor(elementData.c.v[1]) + ',' + bm_floor(elementData.c.v[2]) + ')';
+        }
+    } else if (data.ty === 'gf' || data.ty === 'gs') {
+        elementData.s = PropertyFactory.getProp(this, data.s, 1, null, this);
+        elementData.e = PropertyFactory.getProp(this, data.e, 1, null, this);
+        elementData.h = PropertyFactory.getProp(this, data.h || { k: 0 }, 0, 0.01, this);
+        elementData.a = PropertyFactory.getProp(this, data.a || { k: 0 }, 0, degToRads, this);
+        elementData.g = new GradientProperty(this, data.g, this);
+    }
+    elementData.o = PropertyFactory.getProp(this, data.o, 0, 0.01, this);
+    if (data.ty == 'st' || data.ty == 'gs') {
+        styleElem.lc = this.lcEnum[data.lc] || 'round';
+        styleElem.lj = this.ljEnum[data.lj] || 'round';
+        if (data.lj == 1) {
+            styleElem.ml = data.ml;
+        }
+        elementData.w = PropertyFactory.getProp(this, data.w, 0, null, this);
+        if (!elementData.w.k) {
+            styleElem.wi = elementData.w.v;
+        }
+        if (data.d) {
+            var d = new DashProperty(this, data.d, 'canvas', this);
+            elementData.d = d;
+            if (!elementData.d.k) {
+                styleElem.da = elementData.d.dashArray;
+                styleElem.do = elementData.d.dashoffset[0];
+            }
+        }
+    } else {
+        styleElem.r = data.r === 2 ? 'evenodd' : 'nonzero';
+    }
+    this.stylesList.push(styleElem);
+    elementData.style = styleElem;
+    return elementData;
+};
+
+SkiaShapeElement.prototype.createGroupElement = function (data) {
+    var elementData = {
+        it: [],
+        prevViewData: []
+    };
+    return elementData;
+};
+
+SkiaShapeElement.prototype.createTransformElement = function (data) {
+    var elementData = {
+        transform: {
+            opacity: 1,
+            _opMdf: false,
+            key: this.transformsManager.getNewKey(),
+            op: PropertyFactory.getProp(this, data.o, 0, 0.01, this),
+            mProps: TransformPropertyFactory.getTransformProperty(this, data, this)
+        }
+    };
+    return elementData;
+};
+
+SkiaShapeElement.prototype.createShapeElement = function (data) {
+    var elementData = new CVShapeData(this, data, this.stylesList, this.transformsManager);
+
+    this.shapes.push(elementData);
+    this.addShapeToModifiers(elementData);
+    return elementData;
+};
+
+SkiaShapeElement.prototype.reloadShapes = function () {
+    this._isFirstFrame = true;
+    var i, len = this.itemsData.length;
+    for (i = 0; i < len; i += 1) {
+        this.prevViewData[i] = this.itemsData[i];
+    }
+    this.searchShapes(this.shapesData, this.itemsData, this.prevViewData, true, []);
+    len = this.dynamicProperties.length;
+    for (i = 0; i < len; i += 1) {
+        this.dynamicProperties[i].getValue();
+    }
+    this.renderModifiers();
+    this.transformsManager.processSequences(this._isFirstFrame);
+};
+
+SkiaShapeElement.prototype.addTransformToStyleList = function (transform) {
+    var i, len = this.stylesList.length;
+    for (i = 0; i < len; i += 1) {
+        if (!this.stylesList[i].closed) {
+            this.stylesList[i].transforms.push(transform);
+        }
+    }
+}
+
+SkiaShapeElement.prototype.removeTransformFromStyleList = function () {
+    var i, len = this.stylesList.length;
+    for (i = 0; i < len; i += 1) {
+        if (!this.stylesList[i].closed) {
+            this.stylesList[i].transforms.pop();
+        }
+    }
+}
+
+SkiaShapeElement.prototype.closeStyles = function (styles) {
+    var i, len = styles.length, j, jLen;
+    for (i = 0; i < len; i += 1) {
+        styles[i].closed = true;
+    }
+}
+
+SkiaShapeElement.prototype.searchShapes = function (arr, itemsData, prevViewData, shouldRender, transforms) {
+    var i, len = arr.length - 1;
+    var j, jLen;
+    var ownStyles = [], ownModifiers = [], processedPos, modifier, currentTransform;
+    var ownTransforms = [].concat(transforms);
+    for (i = len; i >= 0; i -= 1) {
+        processedPos = this.searchProcessedElement(arr[i]);
+        if (!processedPos) {
+            arr[i]._shouldRender = shouldRender;
+        } else {
+            itemsData[i] = prevViewData[processedPos - 1];
+        }
+        if (arr[i].ty == 'fl' || arr[i].ty == 'st' || arr[i].ty == 'gf' || arr[i].ty == 'gs') {
+            if (!processedPos) {
+                itemsData[i] = this.createStyleElement(arr[i], ownTransforms);
+            } else {
+                itemsData[i].style.closed = false;
+            }
+
+            ownStyles.push(itemsData[i].style);
+        } else if (arr[i].ty == 'gr') {
+            if (!processedPos) {
+                itemsData[i] = this.createGroupElement(arr[i]);
+            } else {
+                jLen = itemsData[i].it.length;
+                for (j = 0; j < jLen; j += 1) {
+                    itemsData[i].prevViewData[j] = itemsData[i].it[j];
+                }
+            }
+            this.searchShapes(arr[i].it, itemsData[i].it, itemsData[i].prevViewData, shouldRender, ownTransforms);
+        } else if (arr[i].ty == 'tr') {
+            if (!processedPos) {
+                currentTransform = this.createTransformElement(arr[i]);
+                itemsData[i] = currentTransform;
+            }
+            ownTransforms.push(itemsData[i]);
+            this.addTransformToStyleList(itemsData[i]);
+        } else if (arr[i].ty == 'sh' || arr[i].ty == 'rc' || arr[i].ty == 'el' || arr[i].ty == 'sr') {
+            if (!processedPos) {
+                itemsData[i] = this.createShapeElement(arr[i]);
+            }
+
+        } else if (arr[i].ty == 'tm' || arr[i].ty == 'rd') {
+            if (!processedPos) {
+                modifier = ShapeModifiers.getModifier(arr[i].ty);
+                modifier.init(this, arr[i]);
+                itemsData[i] = modifier;
+                this.shapeModifiers.push(modifier);
+            } else {
+                modifier = itemsData[i];
+                modifier.closed = false;
+            }
+            ownModifiers.push(modifier);
+        } else if (arr[i].ty == 'rp') {
+            if (!processedPos) {
+                modifier = ShapeModifiers.getModifier(arr[i].ty);
+                itemsData[i] = modifier;
+                modifier.init(this, arr, i, itemsData);
+                this.shapeModifiers.push(modifier);
+                shouldRender = false;
+            } else {
+                modifier = itemsData[i];
+                modifier.closed = true;
+            }
+            ownModifiers.push(modifier);
+        }
+        this.addProcessedElement(arr[i], i + 1);
+    }
+    this.removeTransformFromStyleList();
+    this.closeStyles(ownStyles);
+    len = ownModifiers.length;
+    for (i = 0; i < len; i += 1) {
+        ownModifiers[i].closed = true;
+    }
+};
+
+SkiaShapeElement.prototype.renderInnerContent = function () {
+    this.transformHelper.opacity = 1;
+    this.transformHelper._opMdf = false;
+    this.renderModifiers();
+    this.transformsManager.processSequences(this._isFirstFrame);
+    this.renderShape(this.transformHelper, this.shapesData, this.itemsData, true);
+};
+
+SkiaShapeElement.prototype.renderShapeTransform = function (parentTransform, groupTransform) {
+    var props, groupMatrix;
+    if (parentTransform._opMdf || groupTransform.op._mdf || this._isFirstFrame) {
+        groupTransform.opacity = parentTransform.opacity;
+        groupTransform.opacity *= groupTransform.op.v;
+        groupTransform._opMdf = true;
+    }
+};
+
+SkiaShapeElement.prototype.setStrokeCap = function (paint, newCap) {
+    switch (newCap) {
+        case 'butt':
+            paint.setStrokeCap(CanvasKit.StrokeCap.Butt);
+            return;
+        case 'round':
+            paint.setStrokeCap(CanvasKit.StrokeCap.Round);
+            return;
+        case 'square':
+            paint.setStrokeCap(CanvasKit.StrokeCap.Square);
+            return;
+    }
+}
+
+SkiaShapeElement.prototype.setStrokeJoin = function (paint, newJoin) {
+    switch (newJoin) {
+        case 'miter':
+            paint.setStrokeJoin(CanvasKit.StrokeJoin.Miter);
+            return;
+        case 'round':
+            paint.setStrokeJoin(CanvasKit.StrokeJoin.Round);
+            return;
+        case 'bevel':
+            paint.setStrokeJoin(CanvasKit.StrokeJoin.Bevel);
+            return;
+    }
+}
+
+SkiaShapeElement.prototype.setStrokeMiter = function (paint, newLimit) {
+    if (newLimit <= 0 || !newLimit) {
+        // Spec says to ignore NaN/Inf/0/negative values
+        return;
+    }
+    paint.setStrokeMiter(newLimit);
+}
+
+SkiaShapeElement.prototype.drawLayer = function () {
+    var i, len = this.stylesList.length;
+    var j, jLen, k, kLen, elems, nodes, renderer = this.globalData.renderer, ctx = this.globalData.canvasContext, type, currentStyle;
+    for (i = 0; i < len; i += 1) {
+        currentStyle = this.stylesList[i];
+        type = currentStyle.type;
+
+        //Skipping style when
+        //Stroke width equals 0
+        //style should not be rendered (extra unused repeaters)
+        //current opacity equals 0
+        //global opacity equals 0
+        if (((type === 'st' || type === 'gs') && currentStyle.wi === 0) || !currentStyle.data._shouldRender || currentStyle.coOp === 0 || this.globalData.currentGlobalAlpha === 0) {
+            continue;
+        }
+        renderer.save();
+        elems = currentStyle.elements;
+        const paint = new this.canvasKit.SkPaint();
+        if (type === 'st' || type === 'gs') {
+            //ctx.strokeStyle;
+            paint.setStyle(type === 'st' ? currentStyle.co : currentStyle.grd);
+            //ctx.lineWidth;
+            paint.setStrokeWidth(currentStyle.wi);
+            //ctx.lineCap;
+            this.setStrokeCap(paint, currentStyle.lc);
+            //ctx.lineJoin;
+            this.setStrokeJoin(paint, currentStyle.lj);
+            //ctx.miterLimit;
+            this.setStrokeMiter(paint, currentStyle.ml || 0);
+        } else {
+            //ctx.fillStyle;
+            paint.setStyle(type === 'fl' ? currentStyle.co : currentStyle.grd);
+        }
+        renderer.ctxOpacity(currentStyle.coOp);
+        if (type !== 'st' && type !== 'gs') {
+            ctx.beginPath();
+        }
+        renderer.ctxTransform(currentStyle.preTransforms.finalTransform.props);
+        jLen = elems.length;
+        for (j = 0; j < jLen; j += 1) {
+            if (type === 'st' || type === 'gs') {
+                ctx.beginPath();
+                if (currentStyle.da) {
+                    ctx.setLineDash(currentStyle.da);
+                    ctx.lineDashOffset = currentStyle.do;
+                }
+            }
+            nodes = elems[j].trNodes;
+            kLen = nodes.length;
+
+            for (k = 0; k < kLen; k += 1) {
+                if (nodes[k].t == 'm') {
+                    ctx.moveTo(nodes[k].p[0], nodes[k].p[1]);
+                } else if (nodes[k].t == 'c') {
+                    ctx.bezierCurveTo(nodes[k].pts[0], nodes[k].pts[1], nodes[k].pts[2], nodes[k].pts[3], nodes[k].pts[4], nodes[k].pts[5]);
+                } else {
+                    ctx.closePath();
+                }
+            }
+            if (type === 'st' || type === 'gs') {
+                ctx.stroke();
+                if (currentStyle.da) {
+                    ctx.setLineDash(this.dashResetter);
+                }
+            }
+        }
+        if (type !== 'st' && type !== 'gs') {
+            ctx.fill(currentStyle.r);
+        }
+        renderer.restore();
+    }
+};
+
+SkiaShapeElement.prototype.renderShape = function (parentTransform, items, data, isMain) {
+    var i, len = items.length - 1;
+    var groupTransform;
+    groupTransform = parentTransform;
+    for (i = len; i >= 0; i -= 1) {
+        if (items[i].ty == 'tr') {
+            groupTransform = data[i].transform;
+            this.renderShapeTransform(parentTransform, groupTransform);
+        } else if (items[i].ty == 'sh' || items[i].ty == 'el' || items[i].ty == 'rc' || items[i].ty == 'sr') {
+            this.renderPath(items[i], data[i]);
+        } else if (items[i].ty == 'fl') {
+            this.renderFill(items[i], data[i], groupTransform);
+        } else if (items[i].ty == 'st') {
+            this.renderStroke(items[i], data[i], groupTransform);
+        } else if (items[i].ty == 'gf' || items[i].ty == 'gs') {
+            this.renderGradientFill(items[i], data[i], groupTransform);
+        } else if (items[i].ty == 'gr') {
+            this.renderShape(groupTransform, items[i].it, data[i].it);
+        } else if (items[i].ty == 'tm') {
+            //
+        }
+    }
+    if (isMain) {
+        this.drawLayer();
+    }
+
+};
+
+SkiaShapeElement.prototype.renderStyledShape = function (styledShape, shape) {
+    if (this._isFirstFrame || shape._mdf || styledShape.transforms._mdf) {
+        var shapeNodes = styledShape.trNodes;
+        var paths = shape.paths;
+        var i, len, j, jLen = paths._length;
+        shapeNodes.length = 0;
+        var groupTransformMat = styledShape.transforms.finalTransform;
+        for (j = 0; j < jLen; j += 1) {
+            var pathNodes = paths.shapes[j];
+            if (pathNodes && pathNodes.v) {
+                len = pathNodes._length;
+                for (i = 1; i < len; i += 1) {
+                    if (i === 1) {
+                        shapeNodes.push({
+                            t: 'm',
+                            p: groupTransformMat.applyToPointArray(pathNodes.v[0][0], pathNodes.v[0][1], 0)
+                        });
+                    }
+                    shapeNodes.push({
+                        t: 'c',
+                        pts: groupTransformMat.applyToTriplePoints(pathNodes.o[i - 1], pathNodes.i[i], pathNodes.v[i])
+                    });
+                }
+                if (len === 1) {
+                    shapeNodes.push({
+                        t: 'm',
+                        p: groupTransformMat.applyToPointArray(pathNodes.v[0][0], pathNodes.v[0][1], 0)
+                    });
+                }
+                if (pathNodes.c && len) {
+                    shapeNodes.push({
+                        t: 'c',
+                        pts: groupTransformMat.applyToTriplePoints(pathNodes.o[i - 1], pathNodes.i[0], pathNodes.v[0])
+                    });
+                    shapeNodes.push({
+                        t: 'z'
+                    });
+                }
+            }
+        }
+        styledShape.trNodes = shapeNodes;
+    }
+}
+
+SkiaShapeElement.prototype.renderPath = function (pathData, itemData) {
+    if (pathData.hd !== true && pathData._shouldRender) {
+        var i, len = itemData.styledShapes.length;
+        for (i = 0; i < len; i += 1) {
+            this.renderStyledShape(itemData.styledShapes[i], itemData.sh);
+        }
+    }
+};
+
+SkiaShapeElement.prototype.renderFill = function (styleData, itemData, groupTransform) {
+    var styleElem = itemData.style;
+
+    if (itemData.c._mdf || this._isFirstFrame) {
+        styleElem.co = 'rgb('
+            + bm_floor(itemData.c.v[0]) + ','
+            + bm_floor(itemData.c.v[1]) + ','
+            + bm_floor(itemData.c.v[2]) + ')';
+    }
+    if (itemData.o._mdf || groupTransform._opMdf || this._isFirstFrame) {
+        styleElem.coOp = itemData.o.v * groupTransform.opacity;
+    }
+};
+
+SkiaShapeElement.prototype.renderGradientFill = function (styleData, itemData, groupTransform) {
+    var styleElem = itemData.style;
+    if (!styleElem.grd || itemData.g._mdf || itemData.s._mdf || itemData.e._mdf || (styleData.t !== 1 && (itemData.h._mdf || itemData.a._mdf))) {
+        var ctx = this.globalData.canvasContext;
+        var grd;
+        var pt1 = itemData.s.v, pt2 = itemData.e.v;
+        if (styleData.t === 1) {
+            grd = ctx.createLinearGradient(pt1[0], pt1[1], pt2[0], pt2[1]);
+        } else {
+            var rad = Math.sqrt(Math.pow(pt1[0] - pt2[0], 2) + Math.pow(pt1[1] - pt2[1], 2));
+            var ang = Math.atan2(pt2[1] - pt1[1], pt2[0] - pt1[0]);
+
+            var percent = itemData.h.v >= 1 ? 0.99 : itemData.h.v <= -1 ? -0.99 : itemData.h.v;
+            var dist = rad * percent;
+            var x = Math.cos(ang + itemData.a.v) * dist + pt1[0];
+            var y = Math.sin(ang + itemData.a.v) * dist + pt1[1];
+            var grd = ctx.createRadialGradient(x, y, 0, pt1[0], pt1[1], rad);
+        }
+
+        var i, len = styleData.g.p;
+        var cValues = itemData.g.c;
+        var opacity = 1;
+
+        for (i = 0; i < len; i += 1) {
+            if (itemData.g._hasOpacity && itemData.g._collapsable) {
+                opacity = itemData.g.o[i * 2 + 1];
+            }
+            grd.addColorStop(cValues[i * 4] / 100, 'rgba(' + cValues[i * 4 + 1] + ',' + cValues[i * 4 + 2] + ',' + cValues[i * 4 + 3] + ',' + opacity + ')');
+        }
+        styleElem.grd = grd;
+    }
+    styleElem.coOp = itemData.o.v * groupTransform.opacity;
+
+};
+
+SkiaShapeElement.prototype.renderStroke = function (styleData, itemData, groupTransform) {
+    var styleElem = itemData.style;
+    var d = itemData.d;
+    if (d && (d._mdf || this._isFirstFrame)) {
+        styleElem.da = d.dashArray;
+        styleElem.do = d.dashoffset[0];
+    }
+    if (itemData.c._mdf || this._isFirstFrame) {
+        styleElem.co = 'rgb(' + bm_floor(itemData.c.v[0]) + ',' + bm_floor(itemData.c.v[1]) + ',' + bm_floor(itemData.c.v[2]) + ')';
+    }
+    if (itemData.o._mdf || groupTransform._opMdf || this._isFirstFrame) {
+        styleElem.coOp = itemData.o.v * groupTransform.opacity;
+    }
+    if (itemData.w._mdf || this._isFirstFrame) {
+        styleElem.wi = itemData.w.v;
+    }
+};
+
+
+SkiaShapeElement.prototype.destroy = function () {
+    this.shapesData = null;
+    this.globalData = null;
+    this.canvasContext = null;
+    this.stylesList.length = 0;
+    this.itemsData.length = 0;
+};
+
+
+function SkiaSolidElement(data, globalData, comp) {
+    this.initElement(data,globalData,comp);
+}
+extendPrototype([BaseElement, TransformElement, SkiaBaseElement, HierarchyElement, FrameElement, RenderableElement], SkiaSolidElement);
+
+SkiaSolidElement.prototype.initElement = SVGShapeElement.prototype.initElement;
+SkiaSolidElement.prototype.prepareFrame = IImageElement.prototype.prepareFrame;
+
+
+SkiaSolidElement.prototype.renderInnerContent = function() {
+    
+
+    //skia solid render
+    // 待完善
+    // ctx.fillStyle = this.data.sc;
+    const paint = new this.canvasKitSkPaint();
+    paint.setStyle(CanvasKit.PaintStyle.Fill);
+    this.skcanvas.drawRect(this.canvasKit.XYWHRect(0, 0, this.data.sw, this.data.sh), paint);
+};
+function SkiaTextElement(data, globalData, comp){
+    this.textSpans = [];
+    this.yOffset = 0;
+    this.fillColorAnim = false;
+    this.strokeColorAnim = false;
+    this.strokeWidthAnim = false;
+    this.stroke = false;
+    this.fill = false;
+    this.justifyOffset = 0;
+    this.currentRender = null;
+    this.renderType = 'canvas';
+    this.values = {
+        fill: 'rgba(0,0,0,0)',
+        stroke: 'rgba(0,0,0,0)',
+        sWidth: 0,
+        fValue: ''
+    };
+    this.initElement(data,globalData,comp);
+}
+extendPrototype([BaseElement,TransformElement,SkiaBaseElement,HierarchyElement,FrameElement,RenderableElement,ITextElement], SkiaTextElement);
+
+SkiaTextElement.prototype.tHelper = createTag('canvas').getContext('2d');
+
+SkiaTextElement.prototype.buildNewText = function(){
+    var documentData = this.textProperty.currentData;
+    this.renderedLetters = createSizedArray(documentData.l ? documentData.l.length : 0);
+
+    var hasFill = false;
+    if(documentData.fc) {
+        hasFill = true;
+        this.values.fill = this.buildColor(documentData.fc);
+    }else{
+        this.values.fill = 'rgba(0,0,0,0)';
+    }
+    this.fill = hasFill;
+    var hasStroke = false;
+    if(documentData.sc){
+        hasStroke = true;
+        this.values.stroke = this.buildColor(documentData.sc);
+        this.values.sWidth = documentData.sw;
+    }
+    var fontData = this.globalData.fontManager.getFontByName(documentData.f);
+    var i, len;
+    var letters = documentData.l;
+    var matrixHelper = this.mHelper;
+    this.stroke = hasStroke;
+    this.values.fValue = documentData.finalSize + 'px '+ this.globalData.fontManager.getFontByName(documentData.f).fFamily;
+    len = documentData.finalText.length;
+    //this.tHelper.font = this.values.fValue;
+    var charData, shapeData, k, kLen, shapes, j, jLen, pathNodes, commands, pathArr, singleShape = this.data.singleShape;
+    var trackingOffset = documentData.tr/1000*documentData.finalSize;
+    var xPos = 0, yPos = 0, firstLine = true;
+    var cnt = 0;
+    for (i = 0; i < len; i += 1) {
+        charData = this.globalData.fontManager.getCharData(documentData.finalText[i], fontData.fStyle, this.globalData.fontManager.getFontByName(documentData.f).fFamily);
+        shapeData = charData && charData.data || {};
+        matrixHelper.reset();
+        if(singleShape && letters[i].n) {
+            xPos = -trackingOffset;
+            yPos += documentData.yOffset;
+            yPos += firstLine ? 1 : 0;
+            firstLine = false;
+        }
+
+        shapes = shapeData.shapes ? shapeData.shapes[0].it : [];
+        jLen = shapes.length;
+        matrixHelper.scale(documentData.finalSize/100,documentData.finalSize/100);
+        if(singleShape){
+            this.applyTextPropertiesToMatrix(documentData, matrixHelper, letters[i].line, xPos, yPos);
+        }
+        commands = createSizedArray(jLen);
+        for(j=0;j<jLen;j+=1){
+            kLen = shapes[j].ks.k.i.length;
+            pathNodes = shapes[j].ks.k;
+            pathArr = [];
+            for(k=1;k<kLen;k+=1){
+                if(k==1){
+                    pathArr.push(matrixHelper.applyToX(pathNodes.v[0][0],pathNodes.v[0][1],0),matrixHelper.applyToY(pathNodes.v[0][0],pathNodes.v[0][1],0));
+                }
+                pathArr.push(matrixHelper.applyToX(pathNodes.o[k-1][0],pathNodes.o[k-1][1],0),matrixHelper.applyToY(pathNodes.o[k-1][0],pathNodes.o[k-1][1],0),matrixHelper.applyToX(pathNodes.i[k][0],pathNodes.i[k][1],0),matrixHelper.applyToY(pathNodes.i[k][0],pathNodes.i[k][1],0),matrixHelper.applyToX(pathNodes.v[k][0],pathNodes.v[k][1],0),matrixHelper.applyToY(pathNodes.v[k][0],pathNodes.v[k][1],0));
+            }
+            pathArr.push(matrixHelper.applyToX(pathNodes.o[k-1][0],pathNodes.o[k-1][1],0),matrixHelper.applyToY(pathNodes.o[k-1][0],pathNodes.o[k-1][1],0),matrixHelper.applyToX(pathNodes.i[0][0],pathNodes.i[0][1],0),matrixHelper.applyToY(pathNodes.i[0][0],pathNodes.i[0][1],0),matrixHelper.applyToX(pathNodes.v[0][0],pathNodes.v[0][1],0),matrixHelper.applyToY(pathNodes.v[0][0],pathNodes.v[0][1],0));
+            commands[j] = pathArr;
+        }
+        if(singleShape){
+            xPos += letters[i].l;
+            xPos += trackingOffset;
+        }
+        if(this.textSpans[cnt]){
+            this.textSpans[cnt].elem = commands;
+        } else {
+            this.textSpans[cnt] = {elem: commands};
+        }
+        cnt +=1;
+    }
+};
+
+SkiaTextElement.prototype.renderInnerContent = function(){
+    var ctx = this.canvasContext;
+    var finalMat = this.finalTransform.mat.props;
+    ctx.font = this.values.fValue;
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'miter';
+    ctx.miterLimit = 4;
+
+    if(!this.data.singleShape){
+        this.textAnimator.getMeasures(this.textProperty.currentData, this.lettersChangedFlag);
+    }
+
+    var  i,len, j, jLen, k, kLen;
+    var renderedLetters = this.textAnimator.renderedLetters;
+
+    var letters = this.textProperty.currentData.l;
+
+    len = letters.length;
+    var renderedLetter;
+    var lastFill = null, lastStroke = null, lastStrokeW = null, commands, pathArr;
+    for(i=0;i<len;i+=1){
+        if(letters[i].n){
+            continue;
+        }
+        renderedLetter = renderedLetters[i];
+        if(renderedLetter){
+            this.globalData.renderer.save();
+            this.globalData.renderer.ctxTransform(renderedLetter.p);
+            this.globalData.renderer.ctxOpacity(renderedLetter.o);
+        }
+        if(this.fill){
+            if(renderedLetter && renderedLetter.fc){
+                if(lastFill !== renderedLetter.fc){
+                    lastFill = renderedLetter.fc;
+                    ctx.fillStyle = renderedLetter.fc;
+                }
+            }else if(lastFill !== this.values.fill){
+                lastFill = this.values.fill;
+                ctx.fillStyle = this.values.fill;
+            }
+            commands = this.textSpans[i].elem;
+            jLen = commands.length;
+            this.globalData.canvasContext.beginPath();
+            for(j=0;j<jLen;j+=1) {
+                pathArr = commands[j];
+                kLen = pathArr.length;
+                this.globalData.canvasContext.moveTo(pathArr[0], pathArr[1]);
+                for (k = 2; k < kLen; k += 6) {
+                    this.globalData.canvasContext.bezierCurveTo(pathArr[k], pathArr[k + 1], pathArr[k + 2], pathArr[k + 3], pathArr[k + 4], pathArr[k + 5]);
+                }
+            }
+            this.globalData.canvasContext.closePath();
+            this.globalData.canvasContext.fill();
+            ///ctx.fillText(this.textSpans[i].val,0,0);
+        }
+        if(this.stroke){
+            if(renderedLetter && renderedLetter.sw){
+                if(lastStrokeW !== renderedLetter.sw){
+                    lastStrokeW = renderedLetter.sw;
+                    ctx.lineWidth = renderedLetter.sw;
+                }
+            }else if(lastStrokeW !== this.values.sWidth){
+                lastStrokeW = this.values.sWidth;
+                ctx.lineWidth = this.values.sWidth;
+            }
+            if(renderedLetter && renderedLetter.sc){
+                if(lastStroke !== renderedLetter.sc){
+                    lastStroke = renderedLetter.sc;
+                    ctx.strokeStyle = renderedLetter.sc;
+                }
+            }else if(lastStroke !== this.values.stroke){
+                lastStroke = this.values.stroke;
+                ctx.strokeStyle = this.values.stroke;
+            }
+            commands = this.textSpans[i].elem;
+            jLen = commands.length;
+            this.globalData.canvasContext.beginPath();
+            for(j=0;j<jLen;j+=1) {
+                pathArr = commands[j];
+                kLen = pathArr.length;
+                this.globalData.canvasContext.moveTo(pathArr[0], pathArr[1]);
+                for (k = 2; k < kLen; k += 6) {
+                    this.globalData.canvasContext.bezierCurveTo(pathArr[k], pathArr[k + 1], pathArr[k + 2], pathArr[k + 3], pathArr[k + 4], pathArr[k + 5]);
+                }
+            }
+            this.globalData.canvasContext.closePath();
+            this.globalData.canvasContext.stroke();
+            ///ctx.strokeText(letters[i].val,0,0);
+        }
+        if(renderedLetter) {
+            this.globalData.renderer.restore();
+        }
+    }
+};
+function SkiaEffects() {
+
+}
+SkiaEffects.prototype.renderFrame = function(){};
 function HBaseElement(data,globalData,comp){}
 HBaseElement.prototype = {
     checkBlendMode: function(){},
@@ -12791,7 +13800,8 @@ AnimationItem.prototype.waitForFontsLoaded = function () {
 }
 
 AnimationItem.prototype.checkLoaded = function () {
-    if (!this.isLoaded && this.renderer.globalData.fontManager.loaded() && (this.imagePreloader.loaded() || this.renderer.rendererType !== 'canvas')) {
+    if (!this.isLoaded && this.renderer.globalData.fontManager.loaded() && (this.imagePreloader.loaded() || 
+    (this.renderer.rendererType !== 'canvas' || this.renderer.rendererType !== 'skiacanvas'))) {
         this.isLoaded = true;
         dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
         if (expressionsPlugin) {

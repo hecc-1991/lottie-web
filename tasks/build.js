@@ -5,7 +5,7 @@ const UglifyJS = require("uglify-js");
 const rootFolder = 'player/';
 const bm_version = '5.6.5';
 const buildReducedVersion = process.argv[2] === 'reduced'
-const defaultBuilds = ['full','svg_light','svg','canvas','html', 'canvas_light', 'html_light', 'canvas_worker']
+const defaultBuilds = ['full','svg_light','svg','canvas','html', 'canvas_light', 'html_light', 'canvas_worker','skia']
 
 const scripts = [
 	{
@@ -415,6 +415,42 @@ const scripts = [
 	{
 		src: 'js/elements/canvasElements/CVEffects.js',
 		builds: ['full','canvas','canvas_light','html','html_light','canvas_worker']
+	},
+	{
+		src: 'js/elements/skiaElements/SkiaContextData.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/skiaElements/SkiaBaseElement.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/skiaElements/SkiaImageElement.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/skiaElements/SkiaCompElement.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/skiaElements/SkiaMaskElement.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/skiaElements/SkiaShapeElement.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/skiaElements/SkiaSolidElement.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/skiaElements/SkiaTextElement.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/skiaElements/SkiaEffects.js',
+		builds: ['full','skia']
 	},
 	{
 		src: 'js/elements/htmlElements/HBaseElement.js',

@@ -1,4 +1,4 @@
-function SkiaCanvasRenderer(animationItem, canvasKit,config) {
+function SkiaCanvasRenderer(animationItem, canvasKit, config) {
     this.canvasKit = canvasKit;
     this.animationItem = animationItem;
     this.renderConfig = {
@@ -52,12 +52,65 @@ SkiaCanvasRenderer.prototype.createSolid = function (data) {
 
 SkiaCanvasRenderer.prototype.createNull = SVGRenderer.prototype.createNull;
 
+/* 
+替换绘图的当前转换矩阵
+a	c	e
+b	d	f
+0	0	1
+a	水平缩放绘图。
+b	水平倾斜绘图。
+c	垂直倾斜绘图。
+d	垂直缩放绘图。
+e	水平移动绘图。
+f	垂直移动绘图。
+ */
+SkiaCanvasRenderer.prototype.transform = function (a, b, c, d, e, f) {
+    const mat33 = [
+        a, c, e,
+        b, d, f,
+        0, 0, 1];
+    this.skcanvas.concat(mat33);
+};
+
+// 检查数字数组是否有效
+SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
+    for (var b = 0; b < arr.length; b++)
+        if (void 0 !== arr[b] && !Number.isFinite(arr[b]))
+            return false;
+    return true;
+}
+
+// 将当前转换重置为单位矩阵。
+SkiaCanvasRenderer.prototype.resetTransform = function () {
+    let mat = this.skcanvas.getTotalMatrix();
+    mat = this.canvasKit.SkMatrix.invert(mat);
+    this.skcanvas.concat(mat);
+};
+
+/* 
+将当前转换重置为单位矩阵。然后运行 transform()。
+a	c	e
+b	d	f
+0	0	1
+a	水平缩放绘图。
+b	水平倾斜绘图。
+c	垂直倾斜绘图。
+d	垂直缩放绘图。
+e	水平移动绘图。
+f	垂直移动绘图。
+ */
+SkiaCanvasRenderer.prototype.setTransform = function (a, b, c, d, e, f) {
+    this.checkNumer(arguments) && (
+        this.resetTransform(),
+        this.transform(a, b, c, d, e, f));
+};
+
 SkiaCanvasRenderer.prototype.ctxTransform = function (props) {
     if (props[0] === 1 && props[1] === 0 && props[4] === 0 && props[5] === 1 && props[12] === 0 && props[13] === 0) {
         return;
     }
     if (!this.renderConfig.clearCanvas) {
-        this.canvasContext.transform(props[0], props[1], props[4], props[5], props[12], props[13]);
+        this.transform(props[0], props[1], props[4], props[5], props[12], props[13]);
         return;
     }
     this.transformMat.cloneFromProps(props);
@@ -66,7 +119,7 @@ SkiaCanvasRenderer.prototype.ctxTransform = function (props) {
     //this.contextData.cTr.transform(props[0],props[1],props[2],props[3],props[4],props[5],props[6],props[7],props[8],props[9],props[10],props[11],props[12],props[13],props[14],props[15]);
     this.contextData.cTr.cloneFromProps(this.transformMat.props);
     var trProps = this.contextData.cTr.props;
-    this.canvasContext.setTransform(trProps[0], trProps[1], trProps[4], trProps[5], trProps[12], trProps[13]);
+    this.setTransform(trProps[0], trProps[1], trProps[4], trProps[5], trProps[12], trProps[13]);
 };
 
 SkiaCanvasRenderer.prototype.ctxOpacity = function (op) {
@@ -74,20 +127,20 @@ SkiaCanvasRenderer.prototype.ctxOpacity = function (op) {
         return;
     }*/
     if (!this.renderConfig.clearCanvas) {
-        this.canvasContext.globalAlpha *= op < 0 ? 0 : op;
+        //this.canvasContext.globalAlpha *= op < 0 ? 0 : op;
         this.globalData.currentGlobalAlpha = this.contextData.cO;
         return;
     }
     this.contextData.cO *= op < 0 ? 0 : op;
     if (this.globalData.currentGlobalAlpha !== this.contextData.cO) {
-        this.canvasContext.globalAlpha = this.contextData.cO;
+        //this.canvasContext.globalAlpha = this.contextData.cO;
         this.globalData.currentGlobalAlpha = this.contextData.cO;
     }
 };
 
 SkiaCanvasRenderer.prototype.reset = function () {
     if (!this.renderConfig.clearCanvas) {
-        this.canvasContext.restore();
+        this.skcanvas.restore();
         return;
     }
     this.contextData.reset();
@@ -95,11 +148,11 @@ SkiaCanvasRenderer.prototype.reset = function () {
 
 SkiaCanvasRenderer.prototype.save = function (actionFlag) {
     if (!this.renderConfig.clearCanvas) {
-        this.canvasContext.save();
+        this.skcanvas.save();
         return;
     }
     if (actionFlag) {
-        this.canvasContext.save();
+        this.skcanvas.save();
     }
     var props = this.contextData.cTr.props;
     if (this.contextData._length <= this.contextData.cArrPos) {
@@ -115,11 +168,11 @@ SkiaCanvasRenderer.prototype.save = function (actionFlag) {
 
 SkiaCanvasRenderer.prototype.restore = function (actionFlag) {
     if (!this.renderConfig.clearCanvas) {
-        this.canvasContext.restore();
+        this.skcanvas.restore();
         return;
     }
     if (actionFlag) {
-        this.canvasContext.restore();
+        this.skcanvas.restore();
         this.globalData.blendMode = 'source-over';
     }
     this.contextData.cArrPos -= 1;
@@ -128,11 +181,11 @@ SkiaCanvasRenderer.prototype.restore = function (actionFlag) {
     for (i = 0; i < 16; i += 1) {
         arr[i] = popped[i];
     }
-    this.canvasContext.setTransform(popped[0], popped[1], popped[4], popped[5], popped[12], popped[13]);
+    this.setTransform(popped[0], popped[1], popped[4], popped[5], popped[12], popped[13]);
     popped = this.contextData.savedOp[this.contextData.cArrPos];
     this.contextData.cO = popped;
     if (this.globalData.currentGlobalAlpha !== popped) {
-        this.canvasContext.globalAlpha = popped;
+        //this.canvasContext.globalAlpha = popped;
         this.globalData.currentGlobalAlpha = popped;
     }
 };
@@ -146,7 +199,6 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         //this.animationItem.container.style.webkitTransform = 'translate3d(0,0,0)';
         this.animationItem.container.style.transformOrigin = this.animationItem.container.style.mozTransformOrigin = this.animationItem.container.style.webkitTransformOrigin = this.animationItem.container.style['-webkit-transform'] = "0px 0px 0px";
         this.animationItem.wrapper.appendChild(this.animationItem.container);
-        this.canvasContext = this.animationItem.container.getContext('2d');
         if (this.renderConfig.className) {
             this.animationItem.container.setAttribute('class', this.renderConfig.className);
         }
@@ -155,7 +207,7 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         } else {
             this.animationItem.container.setAttribute('id', 'skia');
         }
-        
+
         this.surface = this.canvasKit.MakeCanvasSurface(this.animationItem.container.id);
         if (!(this.surface)) {
             throw 'Could not make surface';
@@ -163,7 +215,7 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         this.skcanvas = this.surface.getCanvas();
 
     } else {
-        this.canvasContext = this.renderConfig.context;
+        //this.canvasContext = this.renderConfig.context;
     }
     this.data = animData;
     this.layers = animData.layers;
@@ -176,7 +228,7 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         ty: 0
     };
     this.setupGlobalData(animData, document.body);
-    this.globalData.canvasContext = this.canvasContext;
+    this.globalData.skcanvas = this.skcanvas;
     this.globalData.renderer = this;
     this.globalData.isDashed = false;
     this.globalData.progressiveLoad = this.renderConfig.progressiveLoad;
@@ -195,8 +247,8 @@ SkiaCanvasRenderer.prototype.updateContainerSize = function () {
         this.animationItem.container.setAttribute('width', elementWidth * this.renderConfig.dpr);
         this.animationItem.container.setAttribute('height', elementHeight * this.renderConfig.dpr);
     } else {
-        elementWidth = this.canvasContext.canvas.width * this.renderConfig.dpr;
-        elementHeight = this.canvasContext.canvas.height * this.renderConfig.dpr;
+        elementWidth = this.surface.width * this.renderConfig.dpr;
+        elementHeight = this.surface.height * this.renderConfig.dpr;
     }
     var elementRel, animationRel;
     if (this.renderConfig.preserveAspectRatio.indexOf('meet') !== -1 || this.renderConfig.preserveAspectRatio.indexOf('slice') !== -1) {
@@ -249,10 +301,8 @@ SkiaCanvasRenderer.prototype.updateContainerSize = function () {
         }
     }*/
     this.ctxTransform(this.transformCanvas.props);
-    this.canvasContext.beginPath();
-    this.canvasContext.rect(0, 0, this.transformCanvas.w, this.transformCanvas.h);
-    this.canvasContext.closePath();
-    this.canvasContext.clip();
+
+    this.skcanvas.clipRect(this.canvasKit.XYWHRect(30, 30, 200, 200), this.canvasKit.ClipOp.Intersect, true);
 
     this.renderFrame(this.renderedFrame, true);
 };
@@ -268,10 +318,18 @@ SkiaCanvasRenderer.prototype.destroy = function () {
         }
     }
     this.elements.length = 0;
-    this.globalData.canvasContext = null;
+    this.globalData.skcanvas = null;
     this.animationItem.container = null;
     this.destroyed = true;
 };
+
+// 在给定的矩形内清除指定的像素
+SkiaCanvasRenderer.prototype.clearRect = function (x, y, width, height) {
+    const paint = new this.canvasKit.SkPaint();
+    paint.setStyle(this.canvasKit.PaintStyle.Fill);
+    paint.setBlendMode(this.canvasKit.BlendMode.Clear);
+    this.skcanvas.drawRect(this.canvasKit.XYWHRect(x, y, width, height), paint);
+}
 
 SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {
     if ((this.renderedFrame === num && this.renderConfig.clearCanvas === true && !forceRender) || this.destroyed || num === -1) {
@@ -297,7 +355,7 @@ SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {
     }
     if (this.globalData._mdf) {
         if (this.renderConfig.clearCanvas === true) {
-            this.canvasContext.clearRect(0, 0, this.transformCanvas.w, this.transformCanvas.h);
+            this.clearRect(0, 0, this.transformCanvas.w, this.transformCanvas.h);
         } else {
             this.save();
         }

@@ -238,7 +238,8 @@ AnimationItem.prototype.waitForFontsLoaded = function () {
 }
 
 AnimationItem.prototype.checkLoaded = function () {
-    if (!this.isLoaded && this.renderer.globalData.fontManager.loaded() && (this.imagePreloader.loaded() || this.renderer.rendererType !== 'canvas')) {
+    if (!this.isLoaded && this.renderer.globalData.fontManager.loaded() && (this.imagePreloader.loaded() || 
+    (this.renderer.rendererType !== 'canvas' || this.renderer.rendererType !== 'skiacanvas'))) {
         this.isLoaded = true;
         dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
         if (expressionsPlugin) {
