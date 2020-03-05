@@ -8,12 +8,11 @@ SkiaSolidElement.prototype.prepareFrame = IImageElement.prototype.prepareFrame;
 
 
 SkiaSolidElement.prototype.renderInnerContent = function() {
-    
 
     //skia solid render
-    // 待完善
-    // ctx.fillStyle = this.data.sc;
-    const paint = new this.canvasKitSkPaint();
-    paint.setStyle(CanvasKit.PaintStyle.Fill);
+    const paint = new this.canvasKit.SkPaint();
+    paint.setColor(ColorUtil.parseColor(this.canvasKit,this.data.sc));
+    paint.setStyle(this.canvasKit.PaintStyle.Fill);
+    paint.setAntiAlias(true);
     this.skcanvas.drawRect(this.canvasKit.XYWHRect(0, 0, this.data.sw, this.data.sh), paint);
 };

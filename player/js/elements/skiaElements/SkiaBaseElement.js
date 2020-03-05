@@ -6,7 +6,8 @@ SkiaBaseElement.prototype = {
     initRendererElement: function(){},
     createContainerElements: function(){
         this.skcanvas = this.globalData.skcanvas;
-        this.renderableEffectsManager = new CVEffects(this);
+        this.canvasKit = this.globalData.canvasKit;
+        this.renderableEffectsManager = new SkiaEffects(this);
     },
     createContent: function(){},
     setBlendMode: function(){
@@ -20,7 +21,7 @@ SkiaBaseElement.prototype = {
         }
     },
     createRenderableComponents: function(){
-        this.maskManager = new CVMaskElement(this.data, this);
+        this.maskManager = new SkiaMaskElement(this.data, this);
     },
     hideElement: function(){
         if (!this.hidden && (!this.isInRange || this.isTransparent)) {

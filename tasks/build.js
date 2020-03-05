@@ -41,6 +41,10 @@ const scripts = [
 		builds: defaultBuilds
 	},
 	{
+		src: 'js/utils/skia/color.js',
+		builds: ['full','skia']
+	},
+	{
 		src: 'js/3rd_party/transformation-matrix.js',
 		builds: defaultBuilds
 	},

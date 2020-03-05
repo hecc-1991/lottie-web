@@ -589,6 +589,10 @@ AnimationItem.prototype.trigger = function (name) {
     }
 };
 
+AnimationItem.prototype.onError = function (error) {
+    console.log(error);
+}
+
 AnimationItem.prototype.triggerRenderFrameError = function (nativeError) {
 
     var error = new BMRenderFrameErrorEvent(nativeError, this.currentFrame);

@@ -21,7 +21,7 @@ function SkiaCanvasRenderer(animationItem, canvasKit, config) {
         renderConfig: this.renderConfig,
         currentGlobalAlpha: -1
     };
-    this.contextData = new CVContextData();
+    this.contextData = new SkiaContextData();
     this.elements = [];
     this.pendingElements = [];
     this.transformMat = new Matrix();
@@ -31,23 +31,23 @@ function SkiaCanvasRenderer(animationItem, canvasKit, config) {
 extendPrototype([BaseRenderer], SkiaCanvasRenderer);
 
 SkiaCanvasRenderer.prototype.createShape = function (data) {
-    return new CVShapeElement(data, this.globalData, this);
+    return new SkiaShapeElement(data, this.globalData, this);
 };
 
 SkiaCanvasRenderer.prototype.createText = function (data) {
-    return new CVTextElement(data, this.globalData, this);
+    return new SkiaTextElement(data, this.globalData, this);
 };
 
 SkiaCanvasRenderer.prototype.createImage = function (data) {
-    return new CVImageElement(data, this.globalData, this);
+    return new SkiaImageElement(data, this.globalData, this);
 };
 
 SkiaCanvasRenderer.prototype.createComp = function (data) {
-    return new CVCompElement(data, this.globalData, this);
+    return new SkiaCompElement(data, this.globalData, this);
 };
 
 SkiaCanvasRenderer.prototype.createSolid = function (data) {
-    return new CVSolidElement(data, this.globalData, this);
+    return new SkiaSolidElement(data, this.globalData, this);
 };
 
 SkiaCanvasRenderer.prototype.createNull = SVGRenderer.prototype.createNull;
@@ -228,6 +228,7 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         ty: 0
     };
     this.setupGlobalData(animData, document.body);
+    this.globalData.canvasKit = this.canvasKit;
     this.globalData.skcanvas = this.skcanvas;
     this.globalData.renderer = this;
     this.globalData.isDashed = false;
@@ -300,9 +301,11 @@ SkiaCanvasRenderer.prototype.updateContainerSize = function () {
             this.elements[i].resize(this.globalData.transformCanvas);
         }
     }*/
+
+    // 矩阵变换有bug
     this.ctxTransform(this.transformCanvas.props);
 
-    this.skcanvas.clipRect(this.canvasKit.XYWHRect(30, 30, 200, 200), this.canvasKit.ClipOp.Intersect, true);
+    this.skcanvas.clipRect(this.canvasKit.XYWHRect(0,0,this.transformCanvas.w,this.transformCanvas.h), this.canvasKit.ClipOp.Intersect, true);
 
     this.renderFrame(this.renderedFrame, true);
 };
@@ -318,6 +321,7 @@ SkiaCanvasRenderer.prototype.destroy = function () {
         }
     }
     this.elements.length = 0;
+    this.globalData.canvasKit = null;
     this.globalData.skcanvas = null;
     this.animationItem.container = null;
     this.destroyed = true;
@@ -368,6 +372,7 @@ SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {
             this.restore();
         }
     }
+    this.skcanvas.flush();
 };
 
 SkiaCanvasRenderer.prototype.buildItem = function (pos) {

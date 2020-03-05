@@ -368,6 +368,102 @@ var getBlendMode = (function() {
 		return blendModeEnums[mode] || '';
 	}
 }())
+var ColorUtil = (function () {
+
+    var colorMap = { 'aliceblue': 4293982463, 'antiquewhite': 4294634455, 'aqua': 4278255615, 'aquamarine': 4286578644, 'azure': 4293984255, 'beige': 4294309340, 'bisque': 4294960324, 'black': 4278190080, 'blanchedalmond': 4294962125, 'blue': 4278190335, 'blueviolet': 4287245282, 'brown': 4289014314, 'burlywood': 4292786311, 'cadetblue': 4284456608, 'chartreuse': 4286578432, 'chocolate': 4291979550, 'coral': 4294934352, 'cornflowerblue': 4284782061, 'cornsilk': 4294965468, 'crimson': 4292613180, 'cyan': 4278255615, 'darkblue': 4278190219, 'darkcyan': 4278225803, 'darkgoldenrod': 4290283019, 'darkgray': 4289309097, 'darkgreen': 4278215680, 'darkgrey': 4289309097, 'darkkhaki': 4290623339, 'darkmagenta': 4287299723, 'darkolivegreen': 4283788079, 'darkorange': 4294937600, 'darkorchid': 4288230092, 'darkred': 4287299584, 'darksalmon': 4293498490, 'darkseagreen': 4287609999, 'darkslateblue': 4282924427, 'darkslategray': 4281290575, 'darkslategrey': 4281290575, 'darkturquoise': 4278243025, 'darkviolet': 4287889619, 'deeppink': 4294907027, 'deepskyblue': 4278239231, 'dimgray': 4285098345, 'dimgrey': 4285098345, 'dodgerblue': 4280193279, 'firebrick': 4289864226, 'floralwhite': 4294966000, 'forestgreen': 4280453922, 'fuchsia': 4294902015, 'gainsboro': 4292664540, 'ghostwhite': 4294506751, 'gold': 4294956800, 'goldenrod': 4292519200, 'gray': 4286611584, 'green': 4278222848, 'greenyellow': 4289593135, 'grey': 4286611584, 'honeydew': 4293984240, 'hotpink': 4294928820, 'indianred': 4291648604, 'indigo': 4283105410, 'ivory': 4294967280, 'khaki': 4293977740, 'lavender': 4293322490, 'lavenderblush': 4294963445, 'lawngreen': 4286381056, 'lemonchiffon': 4294965965, 'lightblue': 4289583334, 'lightcoral': 4293951616, 'lightcyan': 4292935679, 'lightgoldenrodyellow': 4294638290, 'lightgray': 4292072403, 'lightgreen': 4287688336, 'lightgrey': 4292072403, 'lightpink': 4294948545, 'lightsalmon': 4294942842, 'lightseagreen': 4280332970, 'lightskyblue': 4287090426, 'lightslategray': 4286023833, 'lightslategrey': 4286023833, 'lightsteelblue': 4289774814, 'lightyellow': 4294967264, 'lime': 4278255360, 'limegreen': 4281519410, 'linen': 4294635750, 'magenta': 4294902015, 'maroon': 4286578688, 'mediumaquamarine': 4284927402, 'mediumblue': 4278190285, 'mediumorchid': 4290401747, 'mediumpurple': 4287852763, 'mediumseagreen': 4282168177, 'mediumslateblue': 4286277870, 'mediumspringgreen': 4278254234, 'mediumturquoise': 4282962380, 'mediumvioletred': 4291237253, 'midnightblue': 4279834992, 'mintcream': 4294311930, 'mistyrose': 4294960353, 'moccasin': 4294960309, 'navajowhite': 4294958765, 'navy': 4278190208, 'oldlace': 4294833638, 'olive': 4286611456, 'olivedrab': 4285238819, 'orange': 4294944000, 'orangered': 4294919424, 'orchid': 4292505814, 'palegoldenrod': 4293847210, 'palegreen': 4288215960, 'paleturquoise': 4289720046, 'palevioletred': 4292571283, 'papayawhip': 4294963157, 'peachpuff': 4294957753, 'peru': 4291659071, 'pink': 4294951115, 'plum': 4292714717, 'powderblue': 4289781990, 'purple': 4286578816, 'rebeccapurple': 4284887961, 'red': 4294901760, 'rosybrown': 4290547599, 'royalblue': 4282477025, 'saddlebrown': 4287317267, 'salmon': 4294606962, 'sandybrown': 4294222944, 'seagreen': 4281240407, 'seashell': 4294964718, 'sienna': 4288696877, 'silver': 4290822336, 'skyblue': 4287090411, 'slateblue': 4285160141, 'slategray': 4285563024, 'slategrey': 4285563024, 'snow': 4294966010, 'springgreen': 4278255487, 'steelblue': 4282811060, 'tan': 4291998860, 'teal': 4278222976, 'thistle': 4292394968, 'transparent': 0, 'tomato': 4294927175, 'turquoise': 4282441936, 'violet': 4293821166, 'wheat': 4294303411, 'white': 4294967295, 'whitesmoke': 4294309365, 'yellow': 4294967040, 'yellowgreen': 4288335154 };
+    function colorToString(CanvasKit,skcolor) {
+        // https://html.spec.whatwg.org/multipage/canvas.html#serialisation-of-a-color
+        var components = CanvasKit.getColorComponents(skcolor);
+        var r = components[0];
+        var g = components[1];
+        var b = components[2];
+        var a = components[3];
+        if (a === 1.0) {
+            // hex
+            r = r.toString(16).toLowerCase();
+            g = g.toString(16).toLowerCase();
+            b = b.toString(16).toLowerCase();
+            r = (r.length === 1 ? '0' + r : r);
+            g = (g.length === 1 ? '0' + g : g);
+            b = (b.length === 1 ? '0' + b : b);
+            return '#' + r + g + b;
+        } else {
+            a = (a === 0 || a === 1) ? a : a.toFixed(8);
+            return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
+        }
+    }
+
+    function valueOrPercent(aStr) {
+        if (aStr === undefined) {
+            return 1; // default to opaque.
+        }
+        var a = parseFloat(aStr);
+        if (aStr && aStr.indexOf('%') !== -1) {
+            return a / 100;
+        }
+        return a;
+    }
+
+    function parseColor(CanvasKit,colorStr) {
+        colorStr = colorStr.toLowerCase();
+        // See https://drafts.csswg.org/css-color/#typedef-hex-color
+        if (colorStr.startsWith('#')) {
+            var r, g, b, a = 255;
+            switch (colorStr.length) {
+                case 9: // 8 hex chars #RRGGBBAA
+                    a = parseInt(colorStr.slice(7, 9), 16);
+                case 7: // 6 hex chars #RRGGBB
+                    r = parseInt(colorStr.slice(1, 3), 16);
+                    g = parseInt(colorStr.slice(3, 5), 16);
+                    b = parseInt(colorStr.slice(5, 7), 16);
+                    break;
+                case 5: // 4 hex chars #RGBA
+                    // multiplying by 17 is the same effect as
+                    // appending another character of the same value
+                    // e.g. e => ee == 14 => 238
+                    a = parseInt(colorStr.slice(4, 5), 16) * 17;
+                case 4: // 6 hex chars #RGB
+                    r = parseInt(colorStr.slice(1, 2), 16) * 17;
+                    g = parseInt(colorStr.slice(2, 3), 16) * 17;
+                    b = parseInt(colorStr.slice(3, 4), 16) * 17;
+                    break;
+            }
+            return CanvasKit.Color(r, g, b, a / 255);
+
+        } else if (colorStr.startsWith('rgba')) {
+            // Trim off rgba( and the closing )
+            colorStr = colorStr.slice(5, -1);
+            var nums = colorStr.split(',');
+            return CanvasKit.Color(+nums[0], +nums[1], +nums[2],
+                valueOrPercent(nums[3]));
+        } else if (colorStr.startsWith('rgb')) {
+            // Trim off rgba( and the closing )
+            colorStr = colorStr.slice(4, -1);
+            var nums = colorStr.split(',');
+            // rgb can take 3 or 4 arguments
+            return CanvasKit.Color(+nums[0], +nums[1], +nums[2],
+                valueOrPercent(nums[3]));
+        } else if (colorStr.startsWith('gray(')) {
+            // TODO
+        } else if (colorStr.startsWith('hsl')) {
+            // TODO
+        } else {
+            // Try for named color
+            var nc = colorMap[colorStr];
+            if (nc !== undefined) {
+                return nc;
+            }
+        }
+        SkDebug('unrecognized color ' + colorStr);
+        return CanvasKit.BLACK;
+    }
+
+    return {
+        colorToString:colorToString,
+        valueOrPercent:valueOrPercent,
+        parseColor:parseColor
+    };
+}());
 /*!
  Transformation Matrix v2.0
  (c) Epistemex 2014-2015
@@ -7406,7 +7502,7 @@ function SkiaCanvasRenderer(animationItem, canvasKit, config) {
         renderConfig: this.renderConfig,
         currentGlobalAlpha: -1
     };
-    this.contextData = new CVContextData();
+    this.contextData = new SkiaContextData();
     this.elements = [];
     this.pendingElements = [];
     this.transformMat = new Matrix();
@@ -7416,23 +7512,23 @@ function SkiaCanvasRenderer(animationItem, canvasKit, config) {
 extendPrototype([BaseRenderer], SkiaCanvasRenderer);
 
 SkiaCanvasRenderer.prototype.createShape = function (data) {
-    return new CVShapeElement(data, this.globalData, this);
+    return new SkiaShapeElement(data, this.globalData, this);
 };
 
 SkiaCanvasRenderer.prototype.createText = function (data) {
-    return new CVTextElement(data, this.globalData, this);
+    return new SkiaTextElement(data, this.globalData, this);
 };
 
 SkiaCanvasRenderer.prototype.createImage = function (data) {
-    return new CVImageElement(data, this.globalData, this);
+    return new SkiaImageElement(data, this.globalData, this);
 };
 
 SkiaCanvasRenderer.prototype.createComp = function (data) {
-    return new CVCompElement(data, this.globalData, this);
+    return new SkiaCompElement(data, this.globalData, this);
 };
 
 SkiaCanvasRenderer.prototype.createSolid = function (data) {
-    return new CVSolidElement(data, this.globalData, this);
+    return new SkiaSolidElement(data, this.globalData, this);
 };
 
 SkiaCanvasRenderer.prototype.createNull = SVGRenderer.prototype.createNull;
@@ -7613,6 +7709,7 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         ty: 0
     };
     this.setupGlobalData(animData, document.body);
+    this.globalData.canvasKit = this.canvasKit;
     this.globalData.skcanvas = this.skcanvas;
     this.globalData.renderer = this;
     this.globalData.isDashed = false;
@@ -7685,9 +7782,11 @@ SkiaCanvasRenderer.prototype.updateContainerSize = function () {
             this.elements[i].resize(this.globalData.transformCanvas);
         }
     }*/
+
+    // 矩阵变换有bug
     this.ctxTransform(this.transformCanvas.props);
 
-    this.skcanvas.clipRect(this.canvasKit.XYWHRect(30, 30, 200, 200), this.canvasKit.ClipOp.Intersect, true);
+    this.skcanvas.clipRect(this.canvasKit.XYWHRect(0,0,this.transformCanvas.w,this.transformCanvas.h), this.canvasKit.ClipOp.Intersect, true);
 
     this.renderFrame(this.renderedFrame, true);
 };
@@ -7703,6 +7802,7 @@ SkiaCanvasRenderer.prototype.destroy = function () {
         }
     }
     this.elements.length = 0;
+    this.globalData.canvasKit = null;
     this.globalData.skcanvas = null;
     this.animationItem.container = null;
     this.destroyed = true;
@@ -7753,6 +7853,7 @@ SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {
             this.restore();
         }
     }
+    this.skcanvas.flush();
 };
 
 SkiaCanvasRenderer.prototype.buildItem = function (pos) {
@@ -11651,7 +11752,8 @@ SkiaBaseElement.prototype = {
     initRendererElement: function(){},
     createContainerElements: function(){
         this.skcanvas = this.globalData.skcanvas;
-        this.renderableEffectsManager = new CVEffects(this);
+        this.canvasKit = this.globalData.canvasKit;
+        this.renderableEffectsManager = new SkiaEffects(this);
     },
     createContent: function(){},
     setBlendMode: function(){
@@ -11665,7 +11767,7 @@ SkiaBaseElement.prototype = {
         }
     },
     createRenderableComponents: function(){
-        this.maskManager = new CVMaskElement(this.data, this);
+        this.maskManager = new SkiaMaskElement(this.data, this);
     },
     hideElement: function(){
         if (!this.hidden && (!this.isInRange || this.isTransparent)) {
@@ -12360,13 +12462,11 @@ SkiaSolidElement.prototype.prepareFrame = IImageElement.prototype.prepareFrame;
 
 
 SkiaSolidElement.prototype.renderInnerContent = function() {
-    
 
     //skia solid render
-    // 待完善
-    // ctx.fillStyle = this.data.sc;
-    const paint = new this.canvasKitSkPaint();
-    paint.setStyle(CanvasKit.PaintStyle.Fill);
+    const paint = new this.canvasKit.SkPaint();
+    paint.setStyle(this.canvasKit.PaintStyle.Fill);
+    paint.setColor(ColorUtil.parseColor(this.canvasKit,this.data.sc));
     this.skcanvas.drawRect(this.canvasKit.XYWHRect(0, 0, this.data.sw, this.data.sh), paint);
 };
 function SkiaTextElement(data, globalData, comp){
@@ -14150,6 +14250,10 @@ AnimationItem.prototype.trigger = function (name) {
         this.onDestroy.call(this, new BMDestroyEvent(name, this));
     }
 };
+
+AnimationItem.prototype.onError = function (error) {
+    console.log(error);
+}
 
 AnimationItem.prototype.triggerRenderFrameError = function (nativeError) {
 
