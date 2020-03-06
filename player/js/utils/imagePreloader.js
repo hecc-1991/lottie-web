@@ -1,6 +1,6 @@
-var ImagePreloader = (function(){
+var ImagePreloader = (function () {
 
-    var proxyImage = (function(){
+    var proxyImage = (function () {
         var canvas = createTag('canvas');
         canvas.width = 1;
         canvas.height = 1;
@@ -10,10 +10,10 @@ var ImagePreloader = (function(){
         return canvas;
     }())
 
-    function imageLoaded(){
+    function imageLoaded() {
         this.loadedAssets += 1;
-        if(this.loadedAssets === this.totalImages){
-            if(this.imagesLoadedCb) {
+        if (this.loadedAssets === this.totalImages) {
+            if (this.imagesLoadedCb) {
                 this.imagesLoadedCb(null);
             }
         }
@@ -23,7 +23,7 @@ var ImagePreloader = (function(){
         var path = '';
         if (assetData.e) {
             path = assetData.p;
-        } else if(assetsPath) {
+        } else if (assetsPath) {
             var imagePath = assetData.p;
             if (imagePath.indexOf('images/') !== -1) {
                 imagePath = imagePath.split('/')[1];
@@ -42,7 +42,7 @@ var ImagePreloader = (function(){
         var img = createTag('img');
         img.crossOrigin = 'anonymous';
         img.addEventListener('load', this._imageLoaded.bind(this), false);
-        img.addEventListener('error', function() {
+        img.addEventListener('error', function () {
             ob.img = proxyImage;
             this._imageLoaded();
         }.bind(this), false);
@@ -54,22 +54,59 @@ var ImagePreloader = (function(){
         return ob;
     }
 
-    function loadAssets(assets, cb){
+    function loadAssets(assets, cb) {
         this.imagesLoadedCb = cb;
         var i, len = assets.length;
         for (i = 0; i < len; i += 1) {
-            if(!assets[i].layers){
+            if (!assets[i].layers) {
                 this.totalImages += 1;
                 this.images.push(this._createImageData(assets[i]));
             }
         }
     }
 
-    function setPath(path){
+
+    /**
+     * 创建图片二进制数据
+     * @param {{图片资源信息}} assetData 
+     */
+    function createImageBinaryData(assetData) {
+        var path = getAssetsPath(assetData, this.assetsPath, this.path);
+
+        var ob = {
+            assetData: assetData
+        }
+
+        fetch(path).then(response => response.arrayBuffer())
+            .then(buffer => {
+                ob.img = buffer;
+                this._imageLoaded();
+            });
+
+        return ob;
+    }
+
+    /**
+     * 加载图片的二进制数据，即ByteArrry
+     * @param {图片资源信息数组} assets 
+     * @param {回调函数} cb 
+     */
+    function loadAssetsBinary(assets, cb) {
+        this.imagesLoadedCb = cb;
+        var i, len = assets.length;
+        for (i = 0; i < len; i += 1) {
+            if (!assets[i].layers) {
+                this.totalImages += 1;
+                this.images.push(this._createImageBinaryData(assets[i]));
+            }
+        }
+    }
+
+    function setPath(path) {
         this.path = path || '';
     }
 
-    function setAssetsPath(path){
+    function setAssetsPath(path) {
         this.assetsPath = path || '';
     }
 
@@ -92,14 +129,16 @@ var ImagePreloader = (function(){
         return this.totalImages === this.loadedAssets;
     }
 
-    return function ImagePreloader(){
+    return function ImagePreloader() {
         this.loadAssets = loadAssets;
+        this.loadAssetsBinary = loadAssetsBinary;
         this.setAssetsPath = setAssetsPath;
         this.setPath = setPath;
         this.loaded = loaded;
         this.destroy = destroy;
         this.getImage = getImage;
         this._createImageData = createImageData;
+        this._createImageBinaryData = createImageBinaryData;
         this._imageLoaded = imageLoaded;
         this.assetsPath = '';
         this.path = '';

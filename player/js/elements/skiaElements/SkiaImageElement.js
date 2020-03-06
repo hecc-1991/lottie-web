@@ -10,12 +10,11 @@ SkiaImageElement.prototype.prepareFrame = IImageElement.prototype.prepareFrame;
 
 SkiaImageElement.prototype.createContent = function(){
 
+    // 输入输出图片尺寸换算
     if (this.img.width && (this.assetData.w !== this.img.width || this.assetData.h !== this.img.height)) {
 
-        // skia img render
         const w = this.assetData.w;
         const h = this.assetData.h;
-        let canvas = this.canvasKit.MakeCanvas(w,h);
         var imgW = this.img.width;
         var imgH = this.img.height;
         var imgRel = imgW / imgH;
@@ -29,14 +28,21 @@ SkiaImageElement.prototype.createContent = function(){
             widthCrop = imgW;
             heightCrop = widthCrop/canvasRel;
         }
-        canvas.drawImage(this.img,(imgW-widthCrop)/2,(imgH-heightCrop)/2,widthCrop,heightCrop,0,0,this.assetData.w,this.assetData.h);
-        this.img.src = canvas.toDataURL();
+        this.srcRect = this.canvasKit.XYWHRect((imgW-widthCrop)/2,(imgH-heightCrop)/2,widthCrop,heightCrop);
+        this.dstRect = this.canvasKit.XYWHRect(0,0,this.assetData.w,this.assetData.h);
     }
 
 };
 
 SkiaImageElement.prototype.renderInnerContent = function(parentMatrix){
-    this.skcanvas.drawImage(this.img,0,0,null);
+    // 图片二进制数据 => skimage => skia绘制
+    let skImg = this.canvasKit.MakeImageFromEncoded(this.img);
+
+    if (this.srcRect && this.dstRect) {
+        this.skcanvas.drawImageRect(skImg,srcRect,dstRect,null,false);
+    }else{
+        this.skcanvas.drawImage(skImg,0,0,null);
+    }
 };
 
 SkiaImageElement.prototype.destroy = function(){

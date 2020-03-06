@@ -190,7 +190,11 @@ AnimationItem.prototype.imagesLoaded = function () {
 AnimationItem.prototype.preloadImages = function () {
     this.imagePreloader.setAssetsPath(this.assetsPath);
     this.imagePreloader.setPath(this.path);
-    this.imagePreloader.loadAssets(this.animationData.assets, this.imagesLoaded.bind(this));
+    if (this.renderer.rendererType == 'skia') {
+        this.imagePreloader.loadAssetsBinary(this.animationData.assets, this.imagesLoaded.bind(this));
+    } else {
+        this.imagePreloader.loadAssets(this.animationData.assets, this.imagesLoaded.bind(this));
+    }
 }
 
 AnimationItem.prototype.configAnimation = function (animData) {
@@ -239,7 +243,7 @@ AnimationItem.prototype.waitForFontsLoaded = function () {
 
 AnimationItem.prototype.checkLoaded = function () {
     if (!this.isLoaded && this.renderer.globalData.fontManager.loaded() && (this.imagePreloader.loaded() || 
-    (this.renderer.rendererType !== 'canvas' || this.renderer.rendererType !== 'skiacanvas'))) {
+    (this.renderer.rendererType !== 'canvas' && this.renderer.rendererType !== 'skia'))) {
         this.isLoaded = true;
         dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
         if (expressionsPlugin) {

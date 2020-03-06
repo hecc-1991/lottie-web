@@ -5171,9 +5171,9 @@ var buildShapeString = function(pathNodes, length, closed, mat) {
         }
         return shapeString;
 }
-var ImagePreloader = (function(){
+var ImagePreloader = (function () {
 
-    var proxyImage = (function(){
+    var proxyImage = (function () {
         var canvas = createTag('canvas');
         canvas.width = 1;
         canvas.height = 1;
@@ -5183,10 +5183,10 @@ var ImagePreloader = (function(){
         return canvas;
     }())
 
-    function imageLoaded(){
+    function imageLoaded() {
         this.loadedAssets += 1;
-        if(this.loadedAssets === this.totalImages){
-            if(this.imagesLoadedCb) {
+        if (this.loadedAssets === this.totalImages) {
+            if (this.imagesLoadedCb) {
                 this.imagesLoadedCb(null);
             }
         }
@@ -5196,7 +5196,7 @@ var ImagePreloader = (function(){
         var path = '';
         if (assetData.e) {
             path = assetData.p;
-        } else if(assetsPath) {
+        } else if (assetsPath) {
             var imagePath = assetData.p;
             if (imagePath.indexOf('images/') !== -1) {
                 imagePath = imagePath.split('/')[1];
@@ -5215,7 +5215,7 @@ var ImagePreloader = (function(){
         var img = createTag('img');
         img.crossOrigin = 'anonymous';
         img.addEventListener('load', this._imageLoaded.bind(this), false);
-        img.addEventListener('error', function() {
+        img.addEventListener('error', function () {
             ob.img = proxyImage;
             this._imageLoaded();
         }.bind(this), false);
@@ -5227,22 +5227,59 @@ var ImagePreloader = (function(){
         return ob;
     }
 
-    function loadAssets(assets, cb){
+    function loadAssets(assets, cb) {
         this.imagesLoadedCb = cb;
         var i, len = assets.length;
         for (i = 0; i < len; i += 1) {
-            if(!assets[i].layers){
+            if (!assets[i].layers) {
                 this.totalImages += 1;
                 this.images.push(this._createImageData(assets[i]));
             }
         }
     }
 
-    function setPath(path){
+
+    /**
+     * 创建图片二进制数据
+     * @param {{图片资源信息}} assetData 
+     */
+    function createImageBinaryData(assetData) {
+        var path = getAssetsPath(assetData, this.assetsPath, this.path);
+
+        var ob = {
+            assetData: assetData
+        }
+
+        fetch(path).then(response => response.arrayBuffer())
+            .then(buffer => {
+                ob.img = buffer;
+                this._imageLoaded();
+            });
+
+        return ob;
+    }
+
+    /**
+     * 加载图片的二进制数据，即ByteArrry
+     * @param {图片资源信息数组} assets 
+     * @param {回调函数} cb 
+     */
+    function loadAssetsBinary(assets, cb) {
+        this.imagesLoadedCb = cb;
+        var i, len = assets.length;
+        for (i = 0; i < len; i += 1) {
+            if (!assets[i].layers) {
+                this.totalImages += 1;
+                this.images.push(this._createImageBinaryData(assets[i]));
+            }
+        }
+    }
+
+    function setPath(path) {
         this.path = path || '';
     }
 
-    function setAssetsPath(path){
+    function setAssetsPath(path) {
         this.assetsPath = path || '';
     }
 
@@ -5265,14 +5302,16 @@ var ImagePreloader = (function(){
         return this.totalImages === this.loadedAssets;
     }
 
-    return function ImagePreloader(){
+    return function ImagePreloader() {
         this.loadAssets = loadAssets;
+        this.loadAssetsBinary = loadAssetsBinary;
         this.setAssetsPath = setAssetsPath;
         this.setPath = setPath;
         this.loaded = loaded;
         this.destroy = destroy;
         this.getImage = getImage;
         this._createImageData = createImageData;
+        this._createImageBinaryData = createImageBinaryData;
         this._imageLoaded = imageLoaded;
         this.assetsPath = '';
         this.path = '';
@@ -7507,7 +7546,7 @@ function SkiaCanvasRenderer(animationItem, canvasKit, config) {
     this.pendingElements = [];
     this.transformMat = new Matrix();
     this.completeLayers = false;
-    this.rendererType = 'skiacanvas';
+    this.rendererType = 'skia';
 }
 extendPrototype([BaseRenderer], SkiaCanvasRenderer);
 
@@ -7533,8 +7572,9 @@ SkiaCanvasRenderer.prototype.createSolid = function (data) {
 
 SkiaCanvasRenderer.prototype.createNull = SVGRenderer.prototype.createNull;
 
-/* 
-替换绘图的当前转换矩阵
+
+/**
+ * 替换绘图的当前转换矩阵
 a	c	e
 b	d	f
 0	0	1
@@ -7553,7 +7593,9 @@ SkiaCanvasRenderer.prototype.transform = function (a, b, c, d, e, f) {
     this.skcanvas.concat(mat33);
 };
 
-// 检查数字数组是否有效
+/**
+ * 检查数字数组是否有效
+ */
 SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
     for (var b = 0; b < arr.length; b++)
         if (void 0 !== arr[b] && !Number.isFinite(arr[b]))
@@ -7561,15 +7603,17 @@ SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
     return true;
 }
 
-// 将当前转换重置为单位矩阵。
+/**
+ * 将当前转换重置为单位矩阵
+ */
 SkiaCanvasRenderer.prototype.resetTransform = function () {
     let mat = this.skcanvas.getTotalMatrix();
     mat = this.canvasKit.SkMatrix.invert(mat);
     this.skcanvas.concat(mat);
 };
 
-/* 
-将当前转换重置为单位矩阵。然后运行 transform()。
+ /**
+  * 将当前转换重置为单位矩阵。然后运行 transform()。
 a	c	e
 b	d	f
 0	0	1
@@ -7579,7 +7623,7 @@ c	垂直倾斜绘图。
 d	垂直缩放绘图。
 e	水平移动绘图。
 f	垂直移动绘图。
- */
+  */
 SkiaCanvasRenderer.prototype.setTransform = function (a, b, c, d, e, f) {
     this.checkNumer(arguments) && (
         this.resetTransform(),
@@ -11827,12 +11871,11 @@ SkiaImageElement.prototype.prepareFrame = IImageElement.prototype.prepareFrame;
 
 SkiaImageElement.prototype.createContent = function(){
 
+    // 输入输出图片尺寸换算
     if (this.img.width && (this.assetData.w !== this.img.width || this.assetData.h !== this.img.height)) {
 
-        // skia img render
         const w = this.assetData.w;
         const h = this.assetData.h;
-        let canvas = this.canvasKit.MakeCanvas(w,h);
         var imgW = this.img.width;
         var imgH = this.img.height;
         var imgRel = imgW / imgH;
@@ -11846,14 +11889,21 @@ SkiaImageElement.prototype.createContent = function(){
             widthCrop = imgW;
             heightCrop = widthCrop/canvasRel;
         }
-        canvas.drawImage(this.img,(imgW-widthCrop)/2,(imgH-heightCrop)/2,widthCrop,heightCrop,0,0,this.assetData.w,this.assetData.h);
-        this.img.src = canvas.toDataURL();
+        this.srcRect = this.canvasKit.XYWHRect((imgW-widthCrop)/2,(imgH-heightCrop)/2,widthCrop,heightCrop);
+        this.dstRect = this.canvasKit.XYWHRect(0,0,this.assetData.w,this.assetData.h);
     }
 
 };
 
 SkiaImageElement.prototype.renderInnerContent = function(parentMatrix){
-    this.skcanvas.drawImage(this.img,0,0,null);
+    // 图片二进制数据 => skimage => skia绘制
+    let skImg = this.canvasKit.MakeImageFromEncoded(this.img);
+
+    if (this.srcRect && this.dstRect) {
+        this.skcanvas.drawImageRect(skImg,srcRect,dstRect,null,false);
+    }else{
+        this.skcanvas.drawImage(skImg,0,0,null);
+    }
 };
 
 SkiaImageElement.prototype.destroy = function(){
@@ -13856,7 +13906,11 @@ AnimationItem.prototype.imagesLoaded = function () {
 AnimationItem.prototype.preloadImages = function () {
     this.imagePreloader.setAssetsPath(this.assetsPath);
     this.imagePreloader.setPath(this.path);
-    this.imagePreloader.loadAssets(this.animationData.assets, this.imagesLoaded.bind(this));
+    if (this.renderer.rendererType == 'skia') {
+        this.imagePreloader.loadAssetsBinary(this.animationData.assets, this.imagesLoaded.bind(this));
+    } else {
+        this.imagePreloader.loadAssets(this.animationData.assets, this.imagesLoaded.bind(this));
+    }
 }
 
 AnimationItem.prototype.configAnimation = function (animData) {
@@ -13905,7 +13959,7 @@ AnimationItem.prototype.waitForFontsLoaded = function () {
 
 AnimationItem.prototype.checkLoaded = function () {
     if (!this.isLoaded && this.renderer.globalData.fontManager.loaded() && (this.imagePreloader.loaded() || 
-    (this.renderer.rendererType !== 'canvas' || this.renderer.rendererType !== 'skiacanvas'))) {
+    (this.renderer.rendererType !== 'canvas' && this.renderer.rendererType !== 'skia'))) {
         this.isLoaded = true;
         dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
         if (expressionsPlugin) {

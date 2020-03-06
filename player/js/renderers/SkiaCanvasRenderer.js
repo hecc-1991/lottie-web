@@ -26,7 +26,7 @@ function SkiaCanvasRenderer(animationItem, canvasKit, config) {
     this.pendingElements = [];
     this.transformMat = new Matrix();
     this.completeLayers = false;
-    this.rendererType = 'skiacanvas';
+    this.rendererType = 'skia';
 }
 extendPrototype([BaseRenderer], SkiaCanvasRenderer);
 
@@ -52,8 +52,9 @@ SkiaCanvasRenderer.prototype.createSolid = function (data) {
 
 SkiaCanvasRenderer.prototype.createNull = SVGRenderer.prototype.createNull;
 
-/* 
-替换绘图的当前转换矩阵
+
+/**
+ * 替换绘图的当前转换矩阵
 a	c	e
 b	d	f
 0	0	1
@@ -72,7 +73,9 @@ SkiaCanvasRenderer.prototype.transform = function (a, b, c, d, e, f) {
     this.skcanvas.concat(mat33);
 };
 
-// 检查数字数组是否有效
+/**
+ * 检查数字数组是否有效
+ */
 SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
     for (var b = 0; b < arr.length; b++)
         if (void 0 !== arr[b] && !Number.isFinite(arr[b]))
@@ -80,15 +83,17 @@ SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
     return true;
 }
 
-// 将当前转换重置为单位矩阵。
+/**
+ * 将当前转换重置为单位矩阵
+ */
 SkiaCanvasRenderer.prototype.resetTransform = function () {
     let mat = this.skcanvas.getTotalMatrix();
     mat = this.canvasKit.SkMatrix.invert(mat);
     this.skcanvas.concat(mat);
 };
 
-/* 
-将当前转换重置为单位矩阵。然后运行 transform()。
+ /**
+  * 将当前转换重置为单位矩阵。然后运行 transform()。
 a	c	e
 b	d	f
 0	0	1
@@ -98,7 +103,7 @@ c	垂直倾斜绘图。
 d	垂直缩放绘图。
 e	水平移动绘图。
 f	垂直移动绘图。
- */
+  */
 SkiaCanvasRenderer.prototype.setTransform = function (a, b, c, d, e, f) {
     this.checkNumer(arguments) && (
         this.resetTransform(),
