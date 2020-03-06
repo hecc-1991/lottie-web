@@ -10,6 +10,7 @@ function SkiaShapeElement(data, globalData, comp) {
     this.transformsManager = new ShapeTransformManager();
     this.initElement(data, globalData, comp);
 
+    // 新增参数
     this.curPath = new this.canvasKit.SkPath();
     this.strokePaint = new this.canvasKit.SkPaint();
     this.fillPaint = new this.canvasKit.SkPaint();
@@ -383,7 +384,7 @@ SkiaShapeElement.prototype.setFillStyle = function (fillStyle, paint) {
     }
 }
 
-//----------------------------------------------------------------------------------------------------//
+//------------------------------------------code from canvaskit----------------------------------------------------------//
 
 // Returns the matrix representing the offset of the shadows. This unapplies
 // the effects of the scale, which should not affect the shadow offsets.
