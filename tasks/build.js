@@ -41,6 +41,30 @@ const scripts = [
 		builds: defaultBuilds
 	},
 	{
+		src: 'js/elements/helpers/skiaContent/SkiaBaseContent.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/helpers/skiaContent/SkiaFill.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/helpers/skiaContent/SkiaStroke.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/helpers/skiaContent/CanvasPattern.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/helpers/skiaContent/LinearCanvasGradient.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/helpers/skiaContent/RadialCanvasGradient.js',
+		builds: ['full','skia']
+	},
+	{
 		src: 'js/utils/skia/color.js',
 		builds: ['full','skia']
 	},

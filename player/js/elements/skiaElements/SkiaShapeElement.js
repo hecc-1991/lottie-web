@@ -12,16 +12,9 @@ function SkiaShapeElement(data, globalData, comp) {
 
     // 新增参数
     this.curPath = new this.canvasKit.SkPath();
-    this.strokePaint = new this.canvasKit.SkPaint();
-    this.fillPaint = new this.canvasKit.SkPaint();
-
-    this._globalAlpha = 1;
-    this._currentTransform = this.canvasKit.SkMatrix.identity();
-
-    this._shadowColor = this.canvasKit.TRANSPARENT;
-    this._shadowOffsetX = 0;
-    this._shadowOffsetY = 0;
-
+    this.fill = new SkiaFill(this.canvasKit);
+    this.stroke = new SkiaStroke(this.canvasKit);
+    this._toCleanUp = [];
 }
 
 extendPrototype([BaseElement, TransformElement, SkiaBaseElement, IShapeElement, HierarchyElement, FrameElement, RenderableElement], SkiaShapeElement);
@@ -247,239 +240,9 @@ SkiaShapeElement.prototype.renderShapeTransform = function (parentTransform, gro
     }
 };
 
-
-/**
- * 创建画笔
- */
-SkiaShapeElement.prototype.setStrokeStyle = function (strokeStyle, paint) {
-    (!paint) && (paint = this.strokePaint);
-    paint.setStyle(this.canvasKi.PaintStyle.Stroke);
-    if (typeof strokeStyle === 'string') {
-        var ss = ColorUtil.parseColor(this.canvasKit, fillStyle);
-        var alphaColor = this.canvasKit.multiplyByAlpha(ss, this._globalAlpha);
-        paint.setColor(alphaColor);
-    } else if (strokeStyle._getShader) {
-        // It's probably an effect.
-        var shader = strokeStyle._getShader(this._currentTransform);
-        paint.setColor(this.canvasKit.Color(0, 0, 0, this._globalAlpha));
-        paint.setShader(shader);
-    }
-}
-
-/**
- * 设置画笔宽
- */
-SkiaShapeElement.prototype.setStrokeWidth = function (width, paint) {
-    if (width <= 0 || !width) {
-        // Spec says to ignore NaN/Inf/0/negative values
-        return;
-    }
-
-    (!paint) && (paint = this.strokePaint);
-    paint.setStrokeWidth(width);
-}
-
-/**
- * 设置画笔末端样式
- */
-SkiaShapeElement.prototype.setStrokeCap = function (cap, paint) {
-    (!paint) && (paint = this.strokePaint);
-    switch (cap) {
-        case 'butt':
-            paint.setStrokeCap(this.canvasKit.StrokeCap.Butt);
-            return;
-        case 'round':
-            paint.setStrokeCap(this.canvasKit.StrokeCap.Round);
-            return;
-        case 'square':
-            paint.setStrokeCap(this.canvasKit.StrokeCap.Square);
-            return;
-    }
-}
-
-/**
- * 设置画笔转角
- */
-SkiaShapeElement.prototype.setStrokeJoin = function (join, paint) {
-    (!paint) && (paint = this.strokePaint);
-    switch (join) {
-        case 'miter':
-            paint.setStrokeJoin(this.canvasKit.StrokeJoin.Miter);
-            return;
-        case 'round':
-            paint.setStrokeJoin(this.canvasKit.StrokeJoin.Round);
-            return;
-        case 'bevel':
-            paint.setStrokeJoin(this.canvasKit.StrokeJoin.Bevel);
-            return;
-    }
-}
-
-/**
- * 设置画笔斜接
- */
-SkiaShapeElement.prototype.setStrokeMiter = function (limit, paint) {
-    if (limit <= 0 || !limit) {
-        // Spec says to ignore NaN/Inf/0/negative values
-        return;
-    }
-
-    (!paint) && (paint = this.strokePaint);
-    paint.setStrokeMiter(limit);
-}
-
-/**
- * 创建虚线
- */
-SkiaShapeElement.prototype.setLineDash = function (dashes, lineDashOffset, paint) {
-    for (var i = 0; i < dashes.length; i++) {
-        if (!isFinite(dashes[i]) || dashes[i] < 0) {
-            console.log('dash list must have positive, finite values');
-            return;
-        }
-    }
-
-    (!paint) && (paint = this.strokePaint);
-
-    if (dashes.length % 2 === 1) {
-        // as per the spec, concatenate 2 copies of dashes
-        // to give it an even number of elements.
-        Array.prototype.push.apply(dashes, dashes);
-    }
-
-    if (dashes.length) {
-        var dashedEffect = this.canvasKit.MakeSkDashPathEffect(dashes, lineDashOffset);
-        paint.setPathEffect(dashedEffect);
-    }
-
-    paint.dispose = function () {
-        dashedEffect && dashedEffect.delete();
-        this.delete();
-    }
-
-}
-
-/**
- * 创建填充
- */
-SkiaShapeElement.prototype.setFillStyle = function (fillStyle, paint) {
-    (!paint) && (paint = this.fillPaint);
-    paint.setStyle(this.canvasKit.PaintStyle.Fill);
-    if (typeof fillStyle === 'string') {
-        var fs = ColorUtil.parseColor(this.canvasKit, fillStyle);
-        var alphaColor = this.canvasKit.multiplyByAlpha(fs, this._globalAlpha);
-        paint.setColor(alphaColor);
-    } else if (fillStyle._getShader) {
-        // It's an effect that has a shader.
-        var shader = fillStyle._getShader(this._currentTransform);
-        paint.setColor(this.canvasKit.Color(0, 0, 0, this._globalAlpha));
-        paint.setShader(shader);
-    }
-
-    paint.dispose = function () {
-        // If there are some helper effects in the future, clean them up
-        // here. In any case, we have .dispose() to make _fillPaint behave
-        // like _strokePaint and _shadowPaint.
-        this.delete();
-    }
-}
-
-//------------------------------------------code from canvaskit----------------------------------------------------------//
-
-// Returns the matrix representing the offset of the shadows. This unapplies
-// the effects of the scale, which should not affect the shadow offsets.
-SkiaShapeElement.prototype._shadowOffsetMatrix = function () {
-    var sx = this._currentTransform[0];
-    var sy = this._currentTransform[4];
-    return this.canvasKit.SkMatrix.translated(this._shadowOffsetX / sx, this._shadowOffsetY / sy);
-}
-
-SkiaShapeElement.prototype.SkBlurRadiusToSigma = function (radius) {
-    // Blink (Chrome) does the following, for legacy reasons, even though it
-    // is against the spec. https://bugs.chromium.org/p/chromium/issues/detail?id=179006
-    // This may change in future releases.
-    // This code is staying here in case any clients are interested in using it
-    // to match Blink "exactly".
-    // if (radius <= 0)
-    //   return 0;
-    // return 0.288675 * radius + 0.5;
-    //
-    // This is what the spec says, which is how Firefox and others operate.
-    return radius / 2;
-}
-
-// Returns the shadow paint for the current settings or null if there
-// should be no shadow. This ends up being a copy of the given
-// paint with a blur maskfilter and the correct color.
-SkiaShapeElement.prototype._shadowPaint = function (basePaint) {
-    // multiply first to see if the alpha channel goes to 0 after multiplication.
-    var alphaColor = this.canvasKit.multiplyByAlpha(this._shadowColor, this._globalAlpha);
-    // if alpha is zero, no shadows
-    if (!this.canvasKit.getColorComponents(alphaColor)[3]) {
-        return null;
-    }
-    // one of these must also be non-zero (otherwise the shadow is
-    // completely hidden.  And the spec says so).
-    if (!(this._shadowBlur || this._shadowOffsetY || this._shadowOffsetX)) {
-        return null;
-    }
-    var shadowPaint = basePaint.copy();
-    shadowPaint.setColor(alphaColor);
-    var blurEffect = this.canvasKit.SkMaskFilter.MakeBlur(this.canvasKit.BlurStyle.Normal,
-        SkBlurRadiusToSigma(this._shadowBlur),
-        false);
-    shadowPaint.setMaskFilter(blurEffect);
-
-    // hack up a "destructor" which also cleans up the blurEffect. Otherwise,
-    // we leak the blurEffect (since smart pointers don't help us in JS land).
-    shadowPaint.dispose = function () {
-        blurEffect.delete();
-        this.delete();
-    };
-    return shadowPaint;
-}
-
-//----------------------------------------------------------------------------------------------------//
-
-/**
- * 填充操作
- */
-SkiaShapeElement.prototype.fill = function (path, fillRule, paint) {
-    if (typeof path === 'string') {
-        // shift the args if a Path2D is supplied
-        fillRule = path;
-        path = this.curPath;
-    } else if (path && path._getPath) {
-        path = path._getPath();
-    }
-    if (fillRule === 'evenodd') {
-        this.curPath.setFillType(this.canvasKit.FillType.EvenOdd);
-    } else if (fillRule === 'nonzero' || !fillRule) {
-        this.curPath.setFillType(this.canvasKit.FillType.Winding);
-    } else {
-        throw 'invalid fill rule';
-    }
-    if (!path) {
-        path = this.curPath;
-    }
-
-    (!paint) && (paint = this.fillPaint);
-
-    var shadowPaint = this._shadowPaint(paint);
-    if (shadowPaint) {
-        this.skcanvas.save();
-        this.skcanvas.concat(this._shadowOffsetMatrix());
-        this.skcanvas.drawPath(path, shadowPaint);
-        this.skcanvas.restore();
-        shadowPaint.dispose();
-    }
-    this.skcanvas.drawPath(path, paint);
-    paint.dispose();
-}
-
 SkiaShapeElement.prototype.drawLayer = function () {
     var i, len = this.stylesList.length;
-    var j, jLen, k, kLen, elems, nodes, renderer = this.globalData.renderer, ctx = this.globalData.canvasContext, type, currentStyle;
+    var j, jLen, k, kLen, elems, nodes, renderer = this.globalData.renderer, type, currentStyle;
     for (i = 0; i < len; i += 1) {
         currentStyle = this.stylesList[i];
         type = currentStyle.type;
@@ -496,19 +259,13 @@ SkiaShapeElement.prototype.drawLayer = function () {
         elems = currentStyle.elements;
 
         if (type === 'st' || type === 'gs') {
-            //ctx.strokeStyle
-            this.setStrokeStyle(type === 'st' ? currentStyle.co : currentStyle.grd);
-            //ctx.lineWidth
-            paint.setStrokeWidth(currentStyle.wi);
-            //ctx.lineCap
-            this.setStrokeCap(paint, currentStyle.lc);
-            //ctx.lineJoin
-            this.setStrokeJoin(paint, currentStyle.lj);
-            //ctx.miterLimit
-            this.setStrokeMiter(paint, currentStyle.ml || 0);
+            this.stroke.setStrokeStyle(type === 'st' ? currentStyle.co : currentStyle.grd);
+            this.stroke.setStrokeWidth(currentStyle.wi);
+            this.stroke.setStrokeCap(paint, currentStyle.lc);
+            this.stroke.setStrokeJoin(paint, currentStyle.lj);
+            this.stroke.setStrokeMiter(paint, currentStyle.ml || 0);
         } else {
-            //ctx.fillStyle
-            this.setFillStyle(type === 'fl' ? currentStyle.co : currentStyle.grd);
+            this.fill.setFillStyle(type === 'fl' ? currentStyle.co : currentStyle.grd);
         }
         renderer.ctxOpacity(currentStyle.coOp);
         if (type !== 'st' && type !== 'gs') {
@@ -537,14 +294,14 @@ SkiaShapeElement.prototype.drawLayer = function () {
                 }
             }
             if (type === 'st' || type === 'gs') {
-                ctx.stroke();
+                this.stroke.draw();
                 if (currentStyle.da) {
-                    this.setLineDash(dashResetter, 0);
+                    this.stroke.setLineDash(dashResetter, 0);
                 }
             }
         }
         if (type !== 'st' && type !== 'gs') {
-            this.fill(currentStyle.r);
+            this.fill.draw(this.skcanvas,this.curPath,currentStyle.r);
         }
         renderer.restore();
     }
@@ -648,11 +405,11 @@ SkiaShapeElement.prototype.renderFill = function (styleData, itemData, groupTran
 SkiaShapeElement.prototype.renderGradientFill = function (styleData, itemData, groupTransform) {
     var styleElem = itemData.style;
     if (!styleElem.grd || itemData.g._mdf || itemData.s._mdf || itemData.e._mdf || (styleData.t !== 1 && (itemData.h._mdf || itemData.a._mdf))) {
-        var ctx = this.globalData.canvasContext;
         var grd;
         var pt1 = itemData.s.v, pt2 = itemData.e.v;
         if (styleData.t === 1) {
-            grd = ctx.createLinearGradient(pt1[0], pt1[1], pt2[0], pt2[1]);
+            grd = new LinearCanvasGradient(pt1[0], pt1[1], pt2[0], pt2[1]);
+            this._toCleanUp.push(grd);
         } else {
             var rad = Math.sqrt(Math.pow(pt1[0] - pt2[0], 2) + Math.pow(pt1[1] - pt2[1], 2));
             var ang = Math.atan2(pt2[1] - pt1[1], pt2[0] - pt1[0]);
@@ -661,7 +418,8 @@ SkiaShapeElement.prototype.renderGradientFill = function (styleData, itemData, g
             var dist = rad * percent;
             var x = Math.cos(ang + itemData.a.v) * dist + pt1[0];
             var y = Math.sin(ang + itemData.a.v) * dist + pt1[1];
-            var grd = ctx.createRadialGradient(x, y, 0, pt1[0], pt1[1], rad);
+            var grd = new RadialCanvasGradient(x, y, 0, pt1[0], pt1[1], rad);
+            this._toCleanUp.push(grd);
         }
 
         var i, len = styleData.g.p;
@@ -702,8 +460,10 @@ SkiaShapeElement.prototype.renderStroke = function (styleData, itemData, groupTr
 SkiaShapeElement.prototype.destroy = function () {
     this.shapesData = null;
     this.globalData = null;
-    this.canvasContext = null;
     this.stylesList.length = 0;
     this.itemsData.length = 0;
+    this._toCleanUp.forEach(function (c) {
+        c._dispose();
+    });
 };
 
