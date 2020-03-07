@@ -505,7 +505,7 @@ function SkiaFill(canvasKit) {
             shadowPaint.dispose();
         }
         skcanvas.drawPath(path, this.paint);
-        this.paint.dispose();
+        //this.paint.dispose();
     }
 
 }
@@ -619,7 +619,7 @@ function SkiaStroke(canvasKit) {
         }
 
         skcanvas.drawPath(path, paint);
-        paint.dispose();
+        //paint.dispose();
     }
 }
 

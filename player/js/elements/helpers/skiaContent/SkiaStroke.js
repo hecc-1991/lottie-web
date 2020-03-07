@@ -93,9 +93,12 @@ function SkiaStroke(canvasKit) {
 
     }
 
+    /**
+     * 画笔操作
+     */
     this.draw = function (skcanvas,path) {
 
-        var shadowPaint = this._shadowPaint(paint);
+        var shadowPaint = this._shadowPaint(this.paint);
         if (shadowPaint) {
             skcanvas.save();
             skcanvas.concat(this._shadowOffsetMatrix());
@@ -104,8 +107,11 @@ function SkiaStroke(canvasKit) {
             shadowPaint.dispose();
         }
 
-        skcanvas.drawPath(path, paint);
-        paint.dispose();
+        skcanvas.drawPath(path, this.paint);
+    }
+
+    this.dispose = function () {
+        this.paint.dispose();
     }
 }
 

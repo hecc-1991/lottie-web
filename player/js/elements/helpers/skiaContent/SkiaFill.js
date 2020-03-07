@@ -50,6 +50,9 @@ function SkiaFill(canvasKit) {
             shadowPaint.dispose();
         }
         skcanvas.drawPath(path, this.paint);
+    }
+
+    this.dispose = function () {
         this.paint.dispose();
     }
 

@@ -10,11 +10,17 @@ function SkiaShapeElement(data, globalData, comp) {
     this.transformsManager = new ShapeTransformManager();
     this.initElement(data, globalData, comp);
 
-    // 新增参数
+    // 绘制路径
     this.curPath = new this.canvasKit.SkPath();
+    // 填充工具
     this.fill = new SkiaFill(this.canvasKit);
+    // 画笔工具
     this.stroke = new SkiaStroke(this.canvasKit);
+    // 内存回收
     this._toCleanUp = [];
+
+    _toCleanUp.push(this.fill);
+    _toCleanUp.push(this.stroke);
 }
 
 extendPrototype([BaseElement, TransformElement, SkiaBaseElement, IShapeElement, HierarchyElement, FrameElement, RenderableElement], SkiaShapeElement);
