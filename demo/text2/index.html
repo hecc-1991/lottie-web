@@ -9,20 +9,24 @@
 <body style="background-color:#ccc; margin: 0px;height: 100%; font-family: sans-serif;font-size: 10px">
 
     <canvas id=shape1 width=600 height=600></canvas>
-    <div style="width:720px;height:1280px;background-color:#333;" id="bodymovin"></div>
+    <canvas id=shape2 width=600 height=600></canvas>
+    <canvas id=textonpath width=300 height=300></canvas>
+    <!-- <div style="width:720px;height:1280px;background-color:#333;" id="bodymovin"></div> -->
 
 
     <script>
         CanvasKitInit({
         }).ready().then((CanvasKit) => {
-            fetch('./NotoSerif-Regular.ttf').then((resp) => {
-            resp.arrayBuffer().then((buffer) => {
-                notoserifData = buffer;
+            TextOnPathAPI1(CanvasKit);
 
-                TextShapingAPI1(CanvasKit, notoserifData);
-                //TextShapingAPI2(CanvasKit, notoserifData);
+            fetch('./NotoSerif-Regular.ttf').then((resp) => {
+                resp.arrayBuffer().then((buffer) => {
+                    notoserifData = buffer;
+
+                    TextShapingAPI1(CanvasKit, notoserifData);
+                    TextShapingAPI2(CanvasKit, notoserifData);
+                });
             });
-        });
         });
 
         function TextShapingAPI1(CanvasKit, notoserifData) {
@@ -93,8 +97,100 @@
             surface.delete();
         }
 
+        function TextShapingAPI2(CanvasKit, notoserifData) {
+            if (!notoserifData || !CanvasKit) {
+                return;
+            }
+            const surface = CanvasKit.MakeSWCanvasSurface('shape2');
+            if (!surface) {
+                console.error('Could not make surface');
+                return;
+            }
+            const paint = new CanvasKit.SkPaint();
+            paint.setColor(CanvasKit.BLUE);
+            paint.setStyle(CanvasKit.PaintStyle.Stroke);
+
+            const fontMgr = CanvasKit.SkFontMgr.RefDefault();
+            const notoSerif = fontMgr.MakeTypefaceFromData(notoserifData);
+
+            const textPaint = new CanvasKit.SkPaint();
+            const bigFont = new CanvasKit.SkFont(notoSerif, 40);
+            const smallFont = new CanvasKit.SkFont(notoSerif, 25);
+
+            const TEXT = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris ac leo vitae ipsum hendrerit euismod quis rutrum nibh. Quisque non suscipit urna. Donec enim urna, facilisis vitae volutpat in, mattis at elit. Sed quis augue et dolor dignissim fringilla. Sed non massa eu neque tristique malesuada. ';
+
+            let X = 240;
+            let Y = 190;
+
+            function drawFrame(canvas) {
+                canvas.clear(CanvasKit.TRANSPARENT);
+
+                const shapedText = new CanvasKit.ShapedText({
+                    font: smallFont,
+                    leftToRight: true,
+                    text: TEXT,
+                    width: (X * 2) - 10,
+                });
+
+                canvas.drawRect(CanvasKit.LTRBRect(10, 10, X * 2, Y * 2), paint);
+                canvas.drawText(shapedText, 10, 40, textPaint, smallFont);
+                canvas.drawText('Try Clicking!', 10, 480, textPaint, bigFont);
+
+                shapedText.delete();
+
+                surface.requestAnimationFrame(drawFrame);
+            }
+            surface.requestAnimationFrame(drawFrame);
+
+            // Make animation interactive
+            let interact = (e) => {
+                if (!e.pressure) {
+                    return;
+                }
+                X = e.offsetX;
+                Y = e.offsetY;
+            };
+            document.getElementById('shape2').addEventListener('pointermove', interact);
+            document.getElementById('shape2').addEventListener('pointerdown', interact);
+            preventScrolling(document.getElementById('shape2'));
+        }
 
 
+        function TextOnPathAPI1(CanvasKit) {
+            const surface = CanvasKit.MakeSWCanvasSurface('textonpath');
+            if (!surface) {
+                console.error('Could not make surface');
+                return;
+            }
+            const canvas = surface.getCanvas();
+            const paint = new CanvasKit.SkPaint();
+            paint.setStyle(CanvasKit.PaintStyle.Stroke);
+            paint.setAntiAlias(true);
+
+            const font = new CanvasKit.SkFont(null, 24);
+            const fontPaint = new CanvasKit.SkPaint();
+            fontPaint.setStyle(CanvasKit.PaintStyle.Fill);
+            fontPaint.setAntiAlias(true);
+
+            const arc = new CanvasKit.SkPath();
+            arc.arcTo(CanvasKit.LTRBRect(20, 40, 280, 300), -160, 140, true);
+            arc.lineTo(210, 140);
+            arc.arcTo(CanvasKit.LTRBRect(20, 0, 280, 260), 160, -140, true);
+
+            const str = 'This téxt should follow the curve across contours...';
+            const textBlob = CanvasKit.SkTextBlob.MakeOnPath(str, arc, font);
+
+            canvas.drawPath(arc, paint);
+            canvas.drawTextBlob(textBlob, 0, 0, fontPaint);
+
+            surface.flush();
+
+            textBlob.delete();
+            arc.delete();
+            paint.delete();
+            font.delete();
+            fontPaint.delete();
+        }
 
         /* var animData = {
             wrapper: document.getElementById('bodymovin'),

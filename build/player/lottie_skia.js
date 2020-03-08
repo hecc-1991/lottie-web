@@ -505,7 +505,10 @@ function SkiaFill(canvasKit) {
             shadowPaint.dispose();
         }
         skcanvas.drawPath(path, this.paint);
-        //this.paint.dispose();
+    }
+
+    this.dispose = function () {
+        this.paint.dispose();
     }
 
 }
@@ -607,9 +610,12 @@ function SkiaStroke(canvasKit) {
 
     }
 
+    /**
+     * 画笔操作
+     */
     this.draw = function (skcanvas,path) {
 
-        var shadowPaint = this._shadowPaint(paint);
+        var shadowPaint = this._shadowPaint(this.paint);
         if (shadowPaint) {
             skcanvas.save();
             skcanvas.concat(this._shadowOffsetMatrix());
@@ -618,8 +624,11 @@ function SkiaStroke(canvasKit) {
             shadowPaint.dispose();
         }
 
-        skcanvas.drawPath(path, paint);
-        //paint.dispose();
+        skcanvas.drawPath(path, this.paint);
+    }
+
+    this.dispose = function () {
+        this.paint.dispose();
     }
 }
 
@@ -929,6 +938,31 @@ var ColorUtil = (function () {
         colorToString:colorToString,
         valueOrPercent:valueOrPercent,
         parseColor:parseColor
+    };
+}());
+/**
+ * skia ==> CanvasKit 单例持有类，方便全局使用
+ */
+var SKIA = (function () {
+
+    /**
+     * 设置上下文环境
+     * @param {} canvasKit 
+     */
+    function setCanvasKit(canvasKit){
+        this.canvasKit = canvasKit;
+    }
+
+    /**
+     * 获取上下文环境
+     */
+    function CanvasKit() {
+        return this.canvasKit;
+    }
+
+    return {
+        setCanvasKit : setCanvasKit,
+        CanvasKit: CanvasKit
     };
 }());
 /*!
@@ -3466,8 +3500,6 @@ var FontManager = (function(){
     }
 
     function getCharData(char, style, font){
-        if(!this.chars)
-        return;
         var i = 0, len = this.chars.length;
         while( i < len) {
             if(this.chars[i].ch === char && this.chars[i].style === style && this.chars[i].fFamily === font){
@@ -5788,6 +5820,86 @@ var ImagePreloader = (function () {
         this.loadedAssets = 0;
         this.imagesLoadedCb = null;
         this.images = [];
+    };
+}());
+var FontPreloader = (function () {
+
+    function fontLoaded() {
+        this.loadedFonts += 1;
+        if (this.loadedFonts === this.totalFonts) {
+            if (this.fontsLoadedCb) {
+                this.fontsLoadedCb(null);
+            }
+        }
+    }
+
+    function getFontsPath(fontData, fontsPath, original_path) {
+        return './fonts/SourceHanSansCN-Bold.otf';
+        //return fontData.fPath;
+    }
+
+
+    /**
+    * 创建字体二进制数据
+    * @param {{字体资源信息}} fontData 
+    */
+    function createFontBinaryData(fontData) {
+        var path = getFontsPath(fontData, this.fontsPath, this.path);
+
+        var ob = {
+            fontData: fontData
+        }
+
+        fetch(path).then(response => response.arrayBuffer())
+            .then(buffer => {
+                const fontMgr = SKIA.CanvasKit().SkFontMgr.RefDefault();
+                ob.font = fontMgr.MakeTypefaceFromData(buffer);
+                _toCleanUp.push(ob.font);
+                this._fontLoaded();
+            });
+
+        return ob;
+    }
+
+    /**
+     * 加载字体的二进制数据，即ByteArrry
+     * @param {字体资源信息数组} assets 
+     * @param {回调函数} cb 
+     */
+    function loadAssetsBinary(assets, cb) {
+        this.fontsLoadedCb = cb;
+        var i, len = assets.list.length;
+        for (i = 0; i < len; i += 1) {
+            this.totalFonts += 1;
+            this.fonts.push(this._createFontBinaryData(assets.list[i]));
+        }
+    }
+
+    function destroy() {
+        this.fontsLoadedCb = null;
+        this.fonts.length = 0;
+        this._toCleanUp.forEach(function (c) {
+            c.delete();
+        });
+    }
+
+    function loaded() {
+        return this.totalFonts === this.loadedFonts;
+    }
+
+    return function FontPreloader() {
+        this.loadAssetsBinary = loadAssetsBinary;
+        this._createFontBinaryData = createFontBinaryData;
+        this.loaded = loaded;
+        this._fontLoaded = fontLoaded;
+        this.destroy = destroy;
+        this.fontsPath = '';
+        this.path = '';
+        this.totalFonts = 0;
+        this.loadedFonts = 0;
+        this.fontsLoadedCb = null;
+        this.fonts = [];
+        this._toCleanUp = [];
     };
 }());
 var featureSupport = (function(){
@@ -12484,11 +12596,17 @@ function SkiaShapeElement(data, globalData, comp) {
     this.transformsManager = new ShapeTransformManager();
     this.initElement(data, globalData, comp);
 
-    // 新增参数
+    // 绘制路径
     this.curPath = new this.canvasKit.SkPath();
+    // 填充工具
     this.fill = new SkiaFill(this.canvasKit);
+    // 画笔工具
     this.stroke = new SkiaStroke(this.canvasKit);
+    // 内存回收
     this._toCleanUp = [];
+
+    _toCleanUp.push(this.fill);
+    _toCleanUp.push(this.stroke);
 }
 
 extendPrototype([BaseElement, TransformElement, SkiaBaseElement, IShapeElement, HierarchyElement, FrameElement, RenderableElement], SkiaShapeElement);
@@ -12980,8 +13098,6 @@ function SkiaTextElement(data, globalData, comp){
     this.initElement(data,globalData,comp);
 }
 extendPrototype([BaseElement,TransformElement,SkiaBaseElement,HierarchyElement,FrameElement,RenderableElement,ITextElement], SkiaTextElement);
-
-SkiaTextElement.prototype.tHelper = createTag('canvas').getContext('2d');
 
 SkiaTextElement.prototype.buildNewText = function(){
     var documentData = this.textProperty.currentData;
@@ -14181,6 +14297,7 @@ var AnimationItem = function () {
     this._completedLoop = false;
     this.projectInterface = ProjectInterface();
     this.imagePreloader = new ImagePreloader();
+    this.fontPreloader = new FontPreloader();
 };
 
 extendPrototype([BaseEvent], AnimationItem);
@@ -14201,7 +14318,7 @@ AnimationItem.prototype.setParams = function (params) {
             this.renderer = new SkiaCanvasRenderer(this, params.canvasKit, params.rendererSettings);
             break;
         case 'svg':
-            this.renderer = new SVGRenderer(this,params.rendererSettings);
+            this.renderer = new SVGRenderer(this, params.rendererSettings);
             break;
         default:
             this.renderer = new HybridRenderer(this, params.rendererSettings);
@@ -14350,6 +14467,23 @@ AnimationItem.prototype.preloadImages = function () {
     }
 }
 
+/**
+ * 字体加载完成的回调
+ */
+AnimationItem.prototype.fontsLoaded = function () {
+    this.trigger('loaded_fonts');
+    this.checkLoaded()
+}
+
+/**
+ * 加载字体
+ */
+AnimationItem.prototype.preloadFonts = function () {
+    if (this.renderer.rendererType == 'skia') {
+        this.fontPreloader.loadAssetsBinary(this.animationData.fonts, this.fontsLoaded.bind(this));
+    }
+}
+
 AnimationItem.prototype.configAnimation = function (animData) {
     if (!this.renderer) {
         return;
@@ -14375,6 +14509,7 @@ AnimationItem.prototype.configAnimation = function (animData) {
         this.renderer.searchExtraCompositions(animData.assets);
         this.trigger('config_ready');
         this.preloadImages();
+        this.preloadFonts();
         this.loadSegments();
         this.updaFrameModifier();
         this.waitForFontsLoaded();
@@ -14387,6 +14522,11 @@ AnimationItem.prototype.waitForFontsLoaded = function () {
     if (!this.renderer) {
         return;
     }
+
+    if (this.renderer.rendererType == 'skia') {
+        return;
+    }
+
     if (this.renderer.globalData.fontManager.loaded()) {
         this.checkLoaded();
     } else {
@@ -14395,8 +14535,12 @@ AnimationItem.prototype.waitForFontsLoaded = function () {
 }
 
 AnimationItem.prototype.checkLoaded = function () {
-    if (!this.isLoaded && this.renderer.globalData.fontManager.loaded() && (this.imagePreloader.loaded() || 
-    (this.renderer.rendererType !== 'canvas' && this.renderer.rendererType !== 'skia'))) {
+    var b_canvas = this.renderer.rendererType == 'canvas';
+    var b_skia = this.renderer.rendererType == 'skia';
+    if (!this.isLoaded &&
+        (b_skia || this.renderer.globalData.fontManager.loaded()) &&
+        (this.fontPreloader.loaded() || !b_skia) &&
+        (this.imagePreloader.loaded() || (!b_canvas && !b_skia))) {
         this.isLoaded = true;
         dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
         if (expressionsPlugin) {
@@ -17353,6 +17497,7 @@ function loadAnimation3(params) {
             params.animationData = JSON.parse(animationData);
         }
         params.canvasKit = CanvasKit;
+        SKIA.setCanvasKit(CanvasKit);
         return animationManager.loadAnimation(params);
     });
 }

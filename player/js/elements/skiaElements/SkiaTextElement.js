@@ -19,8 +19,6 @@ function SkiaTextElement(data, globalData, comp){
 }
 extendPrototype([BaseElement,TransformElement,SkiaBaseElement,HierarchyElement,FrameElement,RenderableElement,ITextElement], SkiaTextElement);
 
-SkiaTextElement.prototype.tHelper = createTag('canvas').getContext('2d');
-
 SkiaTextElement.prototype.buildNewText = function(){
     var documentData = this.textProperty.currentData;
     this.renderedLetters = createSizedArray(documentData.l ? documentData.l.length : 0);

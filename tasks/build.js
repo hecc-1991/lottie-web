@@ -69,6 +69,10 @@ const scripts = [
 		builds: ['full','skia']
 	},
 	{
+		src: 'js/utils/skia/SKIA.js',
+		builds: ['full','skia']
+	},
+	{
 		src: 'js/3rd_party/transformation-matrix.js',
 		builds: defaultBuilds
 	},
@@ -163,6 +167,10 @@ const scripts = [
 	{
 		src: 'js/utils/imagePreloader.js',
 		builds: ['full','canvas','canvas_light','html','html_light','svg','svg_light']
+	},
+	{
+		src: 'js/utils/fontPreloader.js',
+		builds: ['full','skia']
 	},
 	{
 		src: 'js/utils/imagePreloaderWorkerOverride.js',

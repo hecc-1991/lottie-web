@@ -105,6 +105,7 @@ function loadAnimation3(params) {
             params.animationData = JSON.parse(animationData);
         }
         params.canvasKit = CanvasKit;
+        SKIA.setCanvasKit(CanvasKit);
         return animationManager.loadAnimation(params);
     });
 }

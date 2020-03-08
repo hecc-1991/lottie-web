@@ -28,6 +28,7 @@ var AnimationItem = function () {
     this._completedLoop = false;
     this.projectInterface = ProjectInterface();
     this.imagePreloader = new ImagePreloader();
+    this.fontPreloader = new FontPreloader();
 };
 
 extendPrototype([BaseEvent], AnimationItem);
@@ -48,7 +49,7 @@ AnimationItem.prototype.setParams = function (params) {
             this.renderer = new SkiaCanvasRenderer(this, params.canvasKit, params.rendererSettings);
             break;
         case 'svg':
-            this.renderer = new SVGRenderer(this,params.rendererSettings);
+            this.renderer = new SVGRenderer(this, params.rendererSettings);
             break;
         default:
             this.renderer = new HybridRenderer(this, params.rendererSettings);
@@ -197,6 +198,23 @@ AnimationItem.prototype.preloadImages = function () {
     }
 }
 
+/**
+ * 字体加载完成的回调
+ */
+AnimationItem.prototype.fontsLoaded = function () {
+    this.trigger('loaded_fonts');
+    this.checkLoaded()
+}
+
+/**
+ * 加载字体
+ */
+AnimationItem.prototype.preloadFonts = function () {
+    if (this.renderer.rendererType == 'skia') {
+        this.fontPreloader.loadAssetsBinary(this.animationData.fonts, this.fontsLoaded.bind(this));
+    }
+}
+
 AnimationItem.prototype.configAnimation = function (animData) {
     if (!this.renderer) {
         return;
@@ -222,6 +240,7 @@ AnimationItem.prototype.configAnimation = function (animData) {
         this.renderer.searchExtraCompositions(animData.assets);
         this.trigger('config_ready');
         this.preloadImages();
+        this.preloadFonts();
         this.loadSegments();
         this.updaFrameModifier();
         this.waitForFontsLoaded();
@@ -234,6 +253,11 @@ AnimationItem.prototype.waitForFontsLoaded = function () {
     if (!this.renderer) {
         return;
     }
+
+    if (this.renderer.rendererType == 'skia') {
+        return;
+    }
+
     if (this.renderer.globalData.fontManager.loaded()) {
         this.checkLoaded();
     } else {
@@ -242,8 +266,12 @@ AnimationItem.prototype.waitForFontsLoaded = function () {
 }
 
 AnimationItem.prototype.checkLoaded = function () {
-    if (!this.isLoaded && this.renderer.globalData.fontManager.loaded() && (this.imagePreloader.loaded() || 
-    (this.renderer.rendererType !== 'canvas' && this.renderer.rendererType !== 'skia'))) {
+    var b_canvas = this.renderer.rendererType == 'canvas';
+    var b_skia = this.renderer.rendererType == 'skia';
+    if (!this.isLoaded &&
+        (b_skia || this.renderer.globalData.fontManager.loaded()) &&
+        (this.fontPreloader.loaded() || !b_skia) &&
+        (this.imagePreloader.loaded() || (!b_canvas && !b_skia))) {
         this.isLoaded = true;
         dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
         if (expressionsPlugin) {
