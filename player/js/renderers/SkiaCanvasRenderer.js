@@ -333,6 +333,8 @@ SkiaCanvasRenderer.prototype.destroy = function () {
     this.globalData.skcanvas = null;
     this.animationItem.container = null;
     this.destroyed = true;
+
+    this.surface.delete();
 };
 
 // 在给定的矩形内清除指定的像素

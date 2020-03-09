@@ -16,6 +16,11 @@ function SkiaStroke(canvasKit) {
             this.paint.setColor(this.canvasKit.Color(0, 0, 0, this.alpha));
             this.paint.setShader(shader);
         }
+
+        this.paint.dispose = function () {
+            dashedEffect && dashedEffect.delete();
+            this.delete();
+        }
     }
 
     /**
@@ -84,11 +89,6 @@ function SkiaStroke(canvasKit) {
         if (dashes.length) {
             var dashedEffect = this.canvasKit.MakeSkDashPathEffect(dashes, lineDashOffset);
             this.paint.setPathEffect(dashedEffect);
-        }
-
-        this.paint.dispose = function () {
-            dashedEffect && dashedEffect.delete();
-            this.delete();
         }
 
     }

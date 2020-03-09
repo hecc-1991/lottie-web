@@ -19,8 +19,8 @@ function SkiaShapeElement(data, globalData, comp) {
     // 内存回收
     this._toCleanUp = [];
 
-    _toCleanUp.push(this.fill);
-    _toCleanUp.push(this.stroke);
+    this._toCleanUp.push(this.fill);
+    this._toCleanUp.push(this.stroke);
 }
 
 extendPrototype([BaseElement, TransformElement, SkiaBaseElement, IShapeElement, HierarchyElement, FrameElement, RenderableElement], SkiaShapeElement);
@@ -267,9 +267,9 @@ SkiaShapeElement.prototype.drawLayer = function () {
         if (type === 'st' || type === 'gs') {
             this.stroke.setStrokeStyle(type === 'st' ? currentStyle.co : currentStyle.grd);
             this.stroke.setStrokeWidth(currentStyle.wi);
-            this.stroke.setStrokeCap(paint, currentStyle.lc);
-            this.stroke.setStrokeJoin(paint, currentStyle.lj);
-            this.stroke.setStrokeMiter(paint, currentStyle.ml || 0);
+            this.stroke.setStrokeCap(currentStyle.lc);
+            this.stroke.setStrokeJoin(currentStyle.lj);
+            this.stroke.setStrokeMiter(currentStyle.ml || 0);
         } else {
             this.fill.setFillStyle(type === 'fl' ? currentStyle.co : currentStyle.grd);
         }
@@ -307,7 +307,7 @@ SkiaShapeElement.prototype.drawLayer = function () {
             }
         }
         if (type !== 'st' && type !== 'gs') {
-            this.fill.draw(this.skcanvas,this.curPath,currentStyle.r);
+            this.fill.draw(this.skcanvas, this.curPath, currentStyle.r);
         }
         renderer.restore();
     }
@@ -471,5 +471,6 @@ SkiaShapeElement.prototype.destroy = function () {
     this._toCleanUp.forEach(function (c) {
         c._dispose();
     });
+    this.curPath.delete();
 };
 

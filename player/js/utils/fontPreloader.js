@@ -43,6 +43,9 @@ var FontPreloader = (function () {
      * @param {回调函数} cb 
      */
     function loadAssetsBinary(assets, cb) {
+        if (!assets || !assets.list) {
+            return;
+        }
         this.fontsLoadedCb = cb;
         var i, len = assets.list.length;
         for (i = 0; i < len; i += 1) {

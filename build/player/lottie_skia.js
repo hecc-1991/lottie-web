@@ -533,6 +533,11 @@ function SkiaStroke(canvasKit) {
             this.paint.setColor(this.canvasKit.Color(0, 0, 0, this.alpha));
             this.paint.setShader(shader);
         }
+
+        this.paint.dispose = function () {
+            dashedEffect && dashedEffect.delete();
+            this.delete();
+        }
     }
 
     /**
@@ -601,11 +606,6 @@ function SkiaStroke(canvasKit) {
         if (dashes.length) {
             var dashedEffect = this.canvasKit.MakeSkDashPathEffect(dashes, lineDashOffset);
             this.paint.setPathEffect(dashedEffect);
-        }
-
-        this.paint.dispose = function () {
-            dashedEffect && dashedEffect.delete();
-            this.delete();
         }
 
     }
@@ -5867,6 +5867,9 @@ var FontPreloader = (function () {
      * @param {回调函数} cb 
      */
     function loadAssetsBinary(assets, cb) {
+        if (!assets || !assets.list) {
+            return;
+        }
         this.fontsLoadedCb = cb;
         var i, len = assets.list.length;
         for (i = 0; i < len; i += 1) {
@@ -8434,6 +8437,8 @@ SkiaCanvasRenderer.prototype.destroy = function () {
     this.globalData.skcanvas = null;
     this.animationItem.container = null;
     this.destroyed = true;
+
+    this.surface.delete();
 };
 
 // 在给定的矩形内清除指定的像素
@@ -12605,8 +12610,8 @@ function SkiaShapeElement(data, globalData, comp) {
     // 内存回收
     this._toCleanUp = [];
 
-    _toCleanUp.push(this.fill);
-    _toCleanUp.push(this.stroke);
+    this._toCleanUp.push(this.fill);
+    this._toCleanUp.push(this.stroke);
 }
 
 extendPrototype([BaseElement, TransformElement, SkiaBaseElement, IShapeElement, HierarchyElement, FrameElement, RenderableElement], SkiaShapeElement);
@@ -12853,9 +12858,9 @@ SkiaShapeElement.prototype.drawLayer = function () {
         if (type === 'st' || type === 'gs') {
             this.stroke.setStrokeStyle(type === 'st' ? currentStyle.co : currentStyle.grd);
             this.stroke.setStrokeWidth(currentStyle.wi);
-            this.stroke.setStrokeCap(paint, currentStyle.lc);
-            this.stroke.setStrokeJoin(paint, currentStyle.lj);
-            this.stroke.setStrokeMiter(paint, currentStyle.ml || 0);
+            this.stroke.setStrokeCap(currentStyle.lc);
+            this.stroke.setStrokeJoin(currentStyle.lj);
+            this.stroke.setStrokeMiter(currentStyle.ml || 0);
         } else {
             this.fill.setFillStyle(type === 'fl' ? currentStyle.co : currentStyle.grd);
         }
@@ -12893,7 +12898,7 @@ SkiaShapeElement.prototype.drawLayer = function () {
             }
         }
         if (type !== 'st' && type !== 'gs') {
-            this.fill.draw(this.skcanvas,this.curPath,currentStyle.r);
+            this.fill.draw(this.skcanvas, this.curPath, currentStyle.r);
         }
         renderer.restore();
     }
@@ -13057,11 +13062,13 @@ SkiaShapeElement.prototype.destroy = function () {
     this._toCleanUp.forEach(function (c) {
         c._dispose();
     });
+    this.curPath.delete();
 };
 
 
 function SkiaSolidElement(data, globalData, comp) {
     this.initElement(data,globalData,comp);
+    this.paint = new this.canvasKit.SkPaint();
 }
 extendPrototype([BaseElement, TransformElement, SkiaBaseElement, HierarchyElement, FrameElement, RenderableElement], SkiaSolidElement);
 
@@ -13072,11 +13079,14 @@ SkiaSolidElement.prototype.prepareFrame = IImageElement.prototype.prepareFrame;
 SkiaSolidElement.prototype.renderInnerContent = function() {
 
     //skia solid render
-    const paint = new this.canvasKit.SkPaint();
-    paint.setColor(ColorUtil.parseColor(this.canvasKit,this.data.sc));
-    paint.setStyle(this.canvasKit.PaintStyle.Fill);
-    paint.setAntiAlias(true);
-    this.skcanvas.drawRect(this.canvasKit.XYWHRect(0, 0, this.data.sw, this.data.sh), paint);
+    this.paint.setColor(ColorUtil.parseColor(this.canvasKit,this.data.sc));
+    this.paint.setStyle(this.canvasKit.PaintStyle.Fill);
+    this.paint.setAntiAlias(true);
+    this.skcanvas.drawRect(this.canvasKit.XYWHRect(0, 0, this.data.sw, this.data.sh),  this.paint);
+};
+
+SkiaSolidElement.prototype.destroy = function () {
+    this.paint.delete();
 };
 function SkiaTextElement(data, globalData, comp){
     this.textSpans = [];
@@ -14523,11 +14533,7 @@ AnimationItem.prototype.waitForFontsLoaded = function () {
         return;
     }
 
-    if (this.renderer.rendererType == 'skia') {
-        return;
-    }
-
-    if (this.renderer.globalData.fontManager.loaded()) {
+    if (this.renderer.rendererType == 'skia' || this.renderer.globalData.fontManager.loaded()) {
         this.checkLoaded();
     } else {
         setTimeout(this.waitForFontsLoaded.bind(this), 20);

@@ -254,11 +254,7 @@ AnimationItem.prototype.waitForFontsLoaded = function () {
         return;
     }
 
-    if (this.renderer.rendererType == 'skia') {
-        return;
-    }
-
-    if (this.renderer.globalData.fontManager.loaded()) {
+    if (this.renderer.rendererType == 'skia' || this.renderer.globalData.fontManager.loaded()) {
         this.checkLoaded();
     } else {
         setTimeout(this.waitForFontsLoaded.bind(this), 20);
