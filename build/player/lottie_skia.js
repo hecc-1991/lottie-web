@@ -5848,7 +5848,8 @@ var FontPreloader = (function () {
     }
 
     function getFontsPath(fontData, fontsPath, original_path) {
-        return './fonts/SourceHanSansCN-Bold.otf';
+        var path = fontData.u+fontData.fName+'.ttf';
+        return path;
         //return fontData.fPath;
     }
 

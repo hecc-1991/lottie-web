@@ -10,67 +10,12 @@
 
     <div style="width:50%;height:50%;background-color:#333;" id="bodymovin"></div>
     <!-- <canvas style="width:50%;height:50%;background-color:#333;" id="canvas"></canvas> -->
-    <script>
-       /*  CanvasKitInit({
-            //locateFile: (file) => '/node_modules/canvaskit-wasm/bin/' + file,
-        }).ready().then((CanvasKit) => {
-            const surface = CanvasKit.MakeSWCanvasSurface('paths');
-            if (!surface) {
-                console.error('Could not make surface');
-                return;
-            }
-
-            function drawFrame(canvas) {
-                const paint = new CanvasKit.SkPaint();
-                paint.setStrokeWidth(1.0);
-                paint.setAntiAlias(true);
-                paint.setColor(CanvasKit.Color(0, 0, 0, 1.0));
-                paint.setStyle(CanvasKit.PaintStyle.Stroke);
-
-                const path = new CanvasKit.SkPath();
-                path.moveTo(20, 5);
-                path.lineTo(30, 20);
-                path.lineTo(40, 10);
-                path.lineTo(50, 20);
-                path.lineTo(60, 0);
-                path.lineTo(20, 5);
-
-                path.moveTo(20, 80);
-                path.cubicTo(90, 10, 160, 150, 190, 10);
-
-                path.moveTo(36, 148);
-                path.quadTo(66, 188, 120, 136);
-                path.lineTo(36, 148);
-
-                path.moveTo(150, 180);
-                path.arcTo(150, 100, 50, 200, 20);
-                path.lineTo(160, 160);
-
-                path.moveTo(20, 120);
-                path.lineTo(20, 120);
-
-                canvas.drawPath(path, paint);
-
-                let rrect = new CanvasKit.SkPath()
-                    .addRoundRect(100, 10, 140, 62,
-                        10, 4, true);
-
-                canvas.drawPath(rrect, paint);
-
-                path.delete();
-                rrect.delete();
-                paint.delete();
-            }
-            // Intentionally just draw frame once
-            surface.drawOnce(drawFrame);
-        }); */
-    </script>
 
     <script>
 
         var animData = {
             wrapper: document.getElementById('bodymovin'),
-            animType: 'canvas',
+            animType: 'skia',
             loop: true,
             prerender: true,
             autoplay: true,
