@@ -2,31 +2,31 @@ function CanvasPattern(image, repetition) {
     this._shader = null;
     // image should be an SkImage returned from HTMLCanvas.decodeImage()
     this._image = image;
-    this._transform = CanvasKit.SkMatrix.identity();
+    this._transform = SKIA.CanvasKit().SkMatrix.identity();
   
     if (repetition === '') {
       repetition = 'repeat';
     }
     switch(repetition) {
       case 'repeat-x':
-        this._tileX = CanvasKit.TileMode.Repeat;
+        this._tileX = SKIA.CanvasKit().TileMode.Repeat;
         // Skia's 'clamp' mode repeats the last row/column
         // which looks very very strange.
         // Decal mode does just transparent copying, which
         // is exactly what the spec wants.
-        this._tileY = CanvasKit.TileMode.Decal;
+        this._tileY = SKIA.CanvasKit().TileMode.Decal;
         break;
       case 'repeat-y':
-        this._tileX = CanvasKit.TileMode.Decal;
-        this._tileY = CanvasKit.TileMode.Repeat;
+        this._tileX = SKIA.CanvasKit().TileMode.Decal;
+        this._tileY = SKIA.CanvasKit().TileMode.Repeat;
         break;
       case 'repeat':
-        this._tileX = CanvasKit.TileMode.Repeat;
-        this._tileY = CanvasKit.TileMode.Repeat;
+        this._tileX = SKIA.CanvasKit().TileMode.Repeat;
+        this._tileY = SKIA.CanvasKit().TileMode.Repeat;
         break;
       case 'no-repeat':
-        this._tileX = CanvasKit.TileMode.Decal;
-        this._tileY = CanvasKit.TileMode.Decal;
+        this._tileX = SKIA.CanvasKit().TileMode.Decal;
+        this._tileY = SKIA.CanvasKit().TileMode.Decal;
         break;
       default:
         throw 'invalid repetition mode ' + repetition;

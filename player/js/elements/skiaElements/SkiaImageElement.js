@@ -28,15 +28,15 @@ SkiaImageElement.prototype.createContent = function(){
             widthCrop = imgW;
             heightCrop = widthCrop/canvasRel;
         }
-        this.srcRect = this.canvasKit.XYWHRect((imgW-widthCrop)/2,(imgH-heightCrop)/2,widthCrop,heightCrop);
-        this.dstRect = this.canvasKit.XYWHRect(0,0,this.assetData.w,this.assetData.h);
+        this.srcRect = SKIA.CanvasKit().XYWHRect((imgW-widthCrop)/2,(imgH-heightCrop)/2,widthCrop,heightCrop);
+        this.dstRect = SKIA.CanvasKit().XYWHRect(0,0,this.assetData.w,this.assetData.h);
     }
 
 };
 
 SkiaImageElement.prototype.renderInnerContent = function(parentMatrix){
     // 图片二进制数据 => skimage => skia绘制
-    let skImg = this.canvasKit.MakeImageFromEncoded(this.img);
+    let skImg = SKIA.CanvasKit().MakeImageFromEncoded(this.img);
 
     if (this.srcRect && this.dstRect) {
         this.skcanvas.drawImageRect(skImg,srcRect,dstRect,null,false);

@@ -10,13 +10,14 @@ function SkiaCompElement(data, globalData, comp) {
 extendPrototype([SkiaCanvasRenderer, ICompElement, SkiaBaseElement], SkiaCompElement);
 
 SkiaCompElement.prototype.renderInnerContent = function() {
-    const path = new this.canvasKit.SkPath();
+    var CK = SKIA.CanvasKit();
+    const path =new CK.SkPath();
     path.moveTo(0,0);
     path.lineTo(this.data.w,0);
     path.lineTo(this.data.w, this.data.h);
     path.lineTo(0, this.data.h);
     path.lineTo(0,0);
-    this.skcanvas.clipPath(path,this.canvasKit.ClipOp.Intersect,true);
+    this.skcanvas.clipPath(path,SKIA.CanvasKit().ClipOp.Intersect,true);
     var i,len = this.layers.length;
     for( i = len - 1; i >= 0; i -= 1 ){
         if(this.completeLayers || this.elements[i]){

@@ -24,7 +24,8 @@ SkiaMaskElement.prototype.renderFrame = function () {
     var transform = this.element.finalTransform.mat;
     var i, len = this.masksProperties.length;
     var pt,pts,data;
-    const path = new this.canvasKit.SkPath();
+    var CK = SKIA.CanvasKit();
+    const path = new CK.SkPath();
     for (i = 0; i < len; i++) {
         if(this.masksProperties[i].mode !== 'n'){
             if (this.masksProperties[i].inv) {
@@ -47,7 +48,8 @@ SkiaMaskElement.prototype.renderFrame = function () {
         }
     }
     this.element.globalData.renderer.save(true);
-    this.skcanvas.clipPath(path,this.canvasKit.ClipOp.Intersect,true)
+    this.skcanvas.clipPath(path,SKIA.CanvasKit().ClipOp.Intersect,true);
+    path.delete();
 };
 
 SkiaMaskElement.prototype.getMaskProperty = MaskElement.prototype.getMaskProperty;

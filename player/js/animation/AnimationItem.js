@@ -46,7 +46,7 @@ AnimationItem.prototype.setParams = function (params) {
             this.renderer = new CanvasRenderer(this, params.rendererSettings);
             break;
         case 'skia':
-            this.renderer = new SkiaCanvasRenderer(this, params.canvasKit, params.rendererSettings);
+            this.renderer = new SkiaCanvasRenderer(this, params.rendererSettings);
             break;
         case 'svg':
             this.renderer = new SVGRenderer(this, params.rendererSettings);

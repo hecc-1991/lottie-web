@@ -368,13 +368,13 @@ var getBlendMode = (function() {
 		return blendModeEnums[mode] || '';
 	}
 }())
-function SkiaBaseContent(canvasKit) {
-    this.canvasKit = canvasKit;
+function SkiaBaseContent() {
     this.alpha = 1;
-    this.transform = this.canvasKit.SkMatrix.identity();
-    this.paint = new this.canvasKit.SkPaint();
+    this.transform = SKIA.CanvasKit().SkMatrix.identity();
+    var CK = SKIA.CanvasKit();
+    this.paint = new CK.SkPaint();
 
-    this.shadowColor = this.canvasKit.TRANSPARENT;
+    this.shadowColor = SKIA.CanvasKit().TRANSPARENT;
     this.shadowBlur = 0;
     this.shadowOffsetX = 0;
     this.shadowOffsetY = 0;
@@ -400,7 +400,7 @@ function SkiaBaseContent(canvasKit) {
     this._shadowOffsetMatrix = function () {
         var sx = this.transform[0];
         var sy = this.transform[4];
-        return this.canvasKit.SkMatrix.translated(this.shadowOffsetX / sx, this.shadowOffsetY / sy);
+        return SKIA.CanvasKit().SkMatrix.translated(this.shadowOffsetX / sx, this.shadowOffsetY / sy);
     }
 
     this.SkBlurRadiusToSigma = function (radius) {
@@ -422,9 +422,9 @@ function SkiaBaseContent(canvasKit) {
     // paint with a blur maskfilter and the correct color.
     this._shadowPaint = function (basePaint) {
         // multiply first to see if the alpha channel goes to 0 after multiplication.
-        var alphaColor = this.canvasKit.multiplyByAlpha(this.shadowColor, this.alpha);
+        var alphaColor = SKIA.CanvasKit().multiplyByAlpha(this.shadowColor, this.alpha);
         // if alpha is zero, no shadows
-        if (!this.canvasKit.getColorComponents(alphaColor)[3]) {
+        if (!SKIA.CanvasKit().getColorComponents(alphaColor)[3]) {
             return null;
         }
         // one of these must also be non-zero (otherwise the shadow is
@@ -434,7 +434,7 @@ function SkiaBaseContent(canvasKit) {
         }
         var shadowPaint = basePaint.copy();
         shadowPaint.setColor(alphaColor);
-        var blurEffect = this.canvasKit.SkMaskFilter.MakeBlur(this.canvasKit.BlurStyle.Normal,
+        var blurEffect = SKIA.CanvasKit().SkMaskFilter.MakeBlur(SKIA.CanvasKit().BlurStyle.Normal,
             SkBlurRadiusToSigma(this.shadowBlur),
             false);
         shadowPaint.setMaskFilter(blurEffect);
@@ -460,15 +460,15 @@ function SkiaFill(canvasKit) {
  * 创建填充
  */
     this.setFillStyle = function (fillStyle) {
-        this.paint.setStyle(this.canvasKit.PaintStyle.Fill);
+        this.paint.setStyle(SKIA.CanvasKit().PaintStyle.Fill);
         if (typeof fillStyle === 'string') {
-            var fs = ColorUtil.parseColor(this.canvasKit, fillStyle);
-            var alphaColor = this.canvasKit.multiplyByAlpha(fs, this.alpha);
+            var fs = ColorUtil.parseColor( fillStyle);
+            var alphaColor = SKIA.CanvasKit().multiplyByAlpha(fs, this.alpha);
             this.paint.setColor(alphaColor);
         } else if (fillStyle._getShader) {
             // It's an effect that has a shader.
             var shader = fillStyle._getShader(this.transform);
-            this.paint.setColor(this.canvasKit.Color(0, 0, 0, this.alpha));
+            this.paint.setColor(SKIA.CanvasKit().Color(0, 0, 0, this.alpha));
             this.paint.setShader(shader);
         }
 
@@ -491,9 +491,9 @@ function SkiaFill(canvasKit) {
         }
 
         if (fillRule === 'evenodd') {
-            path.setFillType(this.canvasKit.FillType.EvenOdd);
+            path.setFillType(SKIA.CanvasKit().FillType.EvenOdd);
         } else if (fillRule === 'nonzero' || !fillRule) {
-            path.setFillType(this.canvasKit.FillType.Winding);
+            path.setFillType(SKIA.CanvasKit().FillType.Winding);
         }
 
         var shadowPaint = this._shadowPaint(this.paint);
@@ -522,15 +522,15 @@ function SkiaStroke(canvasKit) {
  * 设置画笔风格
  */
     this.setStrokeStyle = function (strokeStyle) {
-        this.paint.setStyle(this.canvasKit.PaintStyle.Stroke);
+        this.paint.setStyle(SKIA.CanvasKit().PaintStyle.Stroke);
         if (typeof strokeStyle === 'string') {
-            var ss = ColorUtil.parseColor(this.canvasKit, fillStyle);
-            var alphaColor = this.canvasKit.multiplyByAlpha(ss, this.alpha);
+            var ss = ColorUtil.parseColor(fillStyle);
+            var alphaColor = SKIA.CanvasKit().multiplyByAlpha(ss, this.alpha);
             this.paint.setColor(alphaColor);
         } else if (strokeStyle._getShader) {
             // It's probably an effect.
             var shader = strokeStyle._getShader(this.transform);
-            this.paint.setColor(this.canvasKit.Color(0, 0, 0, this.alpha));
+            this.paint.setColor(SKIA.CanvasKit().Color(0, 0, 0, this.alpha));
             this.paint.setShader(shader);
         }
 
@@ -546,13 +546,13 @@ function SkiaStroke(canvasKit) {
     this.setStrokeCap = function (cap) {
         switch (cap) {
             case 'butt':
-                this.paint.setStrokeCap(this.canvasKit.StrokeCap.Butt);
+                this.paint.setStrokeCap(SKIA.CanvasKit().StrokeCap.Butt);
                 return;
             case 'round':
-                this.paint.setStrokeCap(this.canvasKit.StrokeCap.Round);
+                this.paint.setStrokeCap(SKIA.CanvasKit().StrokeCap.Round);
                 return;
             case 'square':
-                this.paint.setStrokeCap(this.canvasKit.StrokeCap.Square);
+                this.paint.setStrokeCap(SKIA.CanvasKit().StrokeCap.Square);
                 return;
         }
     }
@@ -563,13 +563,13 @@ function SkiaStroke(canvasKit) {
     this.setStrokeJoin = function (join) {
         switch (join) {
             case 'miter':
-                this.paint.setStrokeJoin(this.canvasKit.StrokeJoin.Miter);
+                this.paint.setStrokeJoin(SKIA.CanvasKit().StrokeJoin.Miter);
                 return;
             case 'round':
-                this.paint.setStrokeJoin(this.canvasKit.StrokeJoin.Round);
+                this.paint.setStrokeJoin(SKIA.CanvasKit().StrokeJoin.Round);
                 return;
             case 'bevel':
-                this.paint.setStrokeJoin(this.canvasKit.StrokeJoin.Bevel);
+                this.paint.setStrokeJoin(SKIA.CanvasKit().StrokeJoin.Bevel);
                 return;
         }
     }
@@ -604,7 +604,7 @@ function SkiaStroke(canvasKit) {
         }
 
         if (dashes.length) {
-            var dashedEffect = this.canvasKit.MakeSkDashPathEffect(dashes, lineDashOffset);
+            var dashedEffect = SKIA.CanvasKit().MakeSkDashPathEffect(dashes, lineDashOffset);
             this.paint.setPathEffect(dashedEffect);
         }
 
@@ -637,31 +637,31 @@ function CanvasPattern(image, repetition) {
     this._shader = null;
     // image should be an SkImage returned from HTMLCanvas.decodeImage()
     this._image = image;
-    this._transform = CanvasKit.SkMatrix.identity();
+    this._transform = SKIA.CanvasKit().SkMatrix.identity();
   
     if (repetition === '') {
       repetition = 'repeat';
     }
     switch(repetition) {
       case 'repeat-x':
-        this._tileX = CanvasKit.TileMode.Repeat;
+        this._tileX = SKIA.CanvasKit().TileMode.Repeat;
         // Skia's 'clamp' mode repeats the last row/column
         // which looks very very strange.
         // Decal mode does just transparent copying, which
         // is exactly what the spec wants.
-        this._tileY = CanvasKit.TileMode.Decal;
+        this._tileY = SKIA.CanvasKit().TileMode.Decal;
         break;
       case 'repeat-y':
-        this._tileX = CanvasKit.TileMode.Decal;
-        this._tileY = CanvasKit.TileMode.Repeat;
+        this._tileX = SKIA.CanvasKit().TileMode.Decal;
+        this._tileY = SKIA.CanvasKit().TileMode.Repeat;
         break;
       case 'repeat':
-        this._tileX = CanvasKit.TileMode.Repeat;
-        this._tileY = CanvasKit.TileMode.Repeat;
+        this._tileX = SKIA.CanvasKit().TileMode.Repeat;
+        this._tileY = SKIA.CanvasKit().TileMode.Repeat;
         break;
       case 'no-repeat':
-        this._tileX = CanvasKit.TileMode.Decal;
-        this._tileY = CanvasKit.TileMode.Decal;
+        this._tileX = SKIA.CanvasKit().TileMode.Decal;
+        this._tileY = SKIA.CanvasKit().TileMode.Decal;
         break;
       default:
         throw 'invalid repetition mode ' + repetition;
@@ -755,15 +755,15 @@ function LinearCanvasGradient(x1, y1, x2, y2) {
       // From the spec: "The points in the linear gradient must be transformed
       // as described by the current transformation matrix when rendering."
       var pts = [x1, y1, x2, y2];
-      CanvasKit.SkMatrix.mapPoints(currentTransform, pts);
+      SKIA.CanvasKit().SkMatrix.mapPoints(currentTransform, pts);
       var sx1 = pts[0];
       var sy1 = pts[1];
       var sx2 = pts[2];
       var sy2 = pts[3];
   
       this._dispose();
-      this._shader = CanvasKit.MakeLinearGradientShader([sx1, sy1], [sx2, sy2],
-        this._colors, this._pos, CanvasKit.TileMode.Clamp);
+      this._shader = SKIA.CanvasKit().MakeLinearGradientShader([sx1, sy1], [sx2, sy2],
+        this._colors, this._pos, SKIA.CanvasKit().TileMode.Clamp);
       return this._shader;
     }
   }
@@ -824,7 +824,7 @@ function RadialCanvasGradient(x1, y1, r1, x2, y2, r2) {
       // From the spec: "The points in the linear gradient must be transformed
       // as described by the current transformation matrix when rendering."
       var pts = [x1, y1, x2, y2];
-      CanvasKit.SkMatrix.mapPoints(currentTransform, pts);
+      SKIA.CanvasKit().SkMatrix.mapPoints(currentTransform, pts);
       var sx1 = pts[0];
       var sy1 = pts[1];
       var sx2 = pts[2];
@@ -838,18 +838,18 @@ function RadialCanvasGradient(x1, y1, r1, x2, y2, r2) {
       var sr2 = r2 * scaleFactor;
   
       this._dispose();
-      this._shader = CanvasKit.MakeTwoPointConicalGradientShader(
+      this._shader = SKIA.CanvasKit().MakeTwoPointConicalGradientShader(
           [sx1, sy1], sr1, [sx2, sy2], sr2, this._colors, this._pos,
-          CanvasKit.TileMode.Clamp);
+          SKIA.CanvasKit().TileMode.Clamp);
       return this._shader;
     }
   }
 var ColorUtil = (function () {
 
     var colorMap = { 'aliceblue': 4293982463, 'antiquewhite': 4294634455, 'aqua': 4278255615, 'aquamarine': 4286578644, 'azure': 4293984255, 'beige': 4294309340, 'bisque': 4294960324, 'black': 4278190080, 'blanchedalmond': 4294962125, 'blue': 4278190335, 'blueviolet': 4287245282, 'brown': 4289014314, 'burlywood': 4292786311, 'cadetblue': 4284456608, 'chartreuse': 4286578432, 'chocolate': 4291979550, 'coral': 4294934352, 'cornflowerblue': 4284782061, 'cornsilk': 4294965468, 'crimson': 4292613180, 'cyan': 4278255615, 'darkblue': 4278190219, 'darkcyan': 4278225803, 'darkgoldenrod': 4290283019, 'darkgray': 4289309097, 'darkgreen': 4278215680, 'darkgrey': 4289309097, 'darkkhaki': 4290623339, 'darkmagenta': 4287299723, 'darkolivegreen': 4283788079, 'darkorange': 4294937600, 'darkorchid': 4288230092, 'darkred': 4287299584, 'darksalmon': 4293498490, 'darkseagreen': 4287609999, 'darkslateblue': 4282924427, 'darkslategray': 4281290575, 'darkslategrey': 4281290575, 'darkturquoise': 4278243025, 'darkviolet': 4287889619, 'deeppink': 4294907027, 'deepskyblue': 4278239231, 'dimgray': 4285098345, 'dimgrey': 4285098345, 'dodgerblue': 4280193279, 'firebrick': 4289864226, 'floralwhite': 4294966000, 'forestgreen': 4280453922, 'fuchsia': 4294902015, 'gainsboro': 4292664540, 'ghostwhite': 4294506751, 'gold': 4294956800, 'goldenrod': 4292519200, 'gray': 4286611584, 'green': 4278222848, 'greenyellow': 4289593135, 'grey': 4286611584, 'honeydew': 4293984240, 'hotpink': 4294928820, 'indianred': 4291648604, 'indigo': 4283105410, 'ivory': 4294967280, 'khaki': 4293977740, 'lavender': 4293322490, 'lavenderblush': 4294963445, 'lawngreen': 4286381056, 'lemonchiffon': 4294965965, 'lightblue': 4289583334, 'lightcoral': 4293951616, 'lightcyan': 4292935679, 'lightgoldenrodyellow': 4294638290, 'lightgray': 4292072403, 'lightgreen': 4287688336, 'lightgrey': 4292072403, 'lightpink': 4294948545, 'lightsalmon': 4294942842, 'lightseagreen': 4280332970, 'lightskyblue': 4287090426, 'lightslategray': 4286023833, 'lightslategrey': 4286023833, 'lightsteelblue': 4289774814, 'lightyellow': 4294967264, 'lime': 4278255360, 'limegreen': 4281519410, 'linen': 4294635750, 'magenta': 4294902015, 'maroon': 4286578688, 'mediumaquamarine': 4284927402, 'mediumblue': 4278190285, 'mediumorchid': 4290401747, 'mediumpurple': 4287852763, 'mediumseagreen': 4282168177, 'mediumslateblue': 4286277870, 'mediumspringgreen': 4278254234, 'mediumturquoise': 4282962380, 'mediumvioletred': 4291237253, 'midnightblue': 4279834992, 'mintcream': 4294311930, 'mistyrose': 4294960353, 'moccasin': 4294960309, 'navajowhite': 4294958765, 'navy': 4278190208, 'oldlace': 4294833638, 'olive': 4286611456, 'olivedrab': 4285238819, 'orange': 4294944000, 'orangered': 4294919424, 'orchid': 4292505814, 'palegoldenrod': 4293847210, 'palegreen': 4288215960, 'paleturquoise': 4289720046, 'palevioletred': 4292571283, 'papayawhip': 4294963157, 'peachpuff': 4294957753, 'peru': 4291659071, 'pink': 4294951115, 'plum': 4292714717, 'powderblue': 4289781990, 'purple': 4286578816, 'rebeccapurple': 4284887961, 'red': 4294901760, 'rosybrown': 4290547599, 'royalblue': 4282477025, 'saddlebrown': 4287317267, 'salmon': 4294606962, 'sandybrown': 4294222944, 'seagreen': 4281240407, 'seashell': 4294964718, 'sienna': 4288696877, 'silver': 4290822336, 'skyblue': 4287090411, 'slateblue': 4285160141, 'slategray': 4285563024, 'slategrey': 4285563024, 'snow': 4294966010, 'springgreen': 4278255487, 'steelblue': 4282811060, 'tan': 4291998860, 'teal': 4278222976, 'thistle': 4292394968, 'transparent': 0, 'tomato': 4294927175, 'turquoise': 4282441936, 'violet': 4293821166, 'wheat': 4294303411, 'white': 4294967295, 'whitesmoke': 4294309365, 'yellow': 4294967040, 'yellowgreen': 4288335154 };
-    function colorToString(CanvasKit,skcolor) {
+    function colorToString(skcolor) {
         // https://html.spec.whatwg.org/multipage/canvas.html#serialisation-of-a-color
-        var components = CanvasKit.getColorComponents(skcolor);
+        var components = SKIA.CanvasKit().getColorComponents(skcolor);
         var r = components[0];
         var g = components[1];
         var b = components[2];
@@ -880,7 +880,7 @@ var ColorUtil = (function () {
         return a;
     }
 
-    function parseColor(CanvasKit,colorStr) {
+    function parseColor(colorStr) {
         colorStr = colorStr.toLowerCase();
         // See https://drafts.csswg.org/css-color/#typedef-hex-color
         if (colorStr.startsWith('#')) {
@@ -904,20 +904,20 @@ var ColorUtil = (function () {
                     b = parseInt(colorStr.slice(3, 4), 16) * 17;
                     break;
             }
-            return CanvasKit.Color(r, g, b, a / 255);
+            return SKIA.CanvasKit().Color(r, g, b, a / 255);
 
         } else if (colorStr.startsWith('rgba')) {
             // Trim off rgba( and the closing )
             colorStr = colorStr.slice(5, -1);
             var nums = colorStr.split(',');
-            return CanvasKit.Color(+nums[0], +nums[1], +nums[2],
+            return SKIA.CanvasKit().Color(+nums[0], +nums[1], +nums[2],
                 valueOrPercent(nums[3]));
         } else if (colorStr.startsWith('rgb')) {
             // Trim off rgba( and the closing )
             colorStr = colorStr.slice(4, -1);
             var nums = colorStr.split(',');
             // rgb can take 3 or 4 arguments
-            return CanvasKit.Color(+nums[0], +nums[1], +nums[2],
+            return SKIA.CanvasKit().Color(+nums[0], +nums[1], +nums[2],
                 valueOrPercent(nums[3]));
         } else if (colorStr.startsWith('gray(')) {
             // TODO
@@ -931,7 +931,7 @@ var ColorUtil = (function () {
             }
         }
         SkDebug('unrecognized color ' + colorStr);
-        return CanvasKit.BLACK;
+        return SKIA.CanvasKit().BLACK;
     }
 
     return {
@@ -8103,7 +8103,6 @@ CanvasRenderer.prototype.show = function(){
 };
 
 function SkiaCanvasRenderer(animationItem, canvasKit, config) {
-    this.canvasKit = canvasKit;
     this.animationItem = animationItem;
     this.renderConfig = {
         clearCanvas: (config && config.clearCanvas !== undefined) ? config.clearCanvas : true,
@@ -8192,7 +8191,7 @@ SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
  */
 SkiaCanvasRenderer.prototype.resetTransform = function () {
     let mat = this.skcanvas.getTotalMatrix();
-    mat = this.canvasKit.SkMatrix.invert(mat);
+    mat = SKIA.CanvasKit().SkMatrix.invert(mat);
     this.skcanvas.concat(mat);
 };
 
@@ -8321,7 +8320,7 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
             this.animationItem.container.setAttribute('id', 'skia');
         }
 
-        this.surface = this.canvasKit.MakeCanvasSurface(this.animationItem.container.id);
+        this.surface = SKIA.CanvasKit().MakeCanvasSurface(this.animationItem.container.id);
         if (!(this.surface)) {
             throw 'Could not make surface';
         }
@@ -8341,7 +8340,7 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         ty: 0
     };
     this.setupGlobalData(animData, document.body);
-    this.globalData.canvasKit = this.canvasKit;
+    this.globalData.canvasKit = SKIA.CanvasKit();
     this.globalData.skcanvas = this.skcanvas;
     this.globalData.renderer = this;
     this.globalData.isDashed = false;
@@ -8417,7 +8416,7 @@ SkiaCanvasRenderer.prototype.updateContainerSize = function () {
 
     this.ctxTransform(this.transformCanvas.props);
 
-    this.skcanvas.clipRect(this.canvasKit.XYWHRect(0,0,this.transformCanvas.w,this.transformCanvas.h), this.canvasKit.ClipOp.Intersect, true);
+    this.skcanvas.clipRect(SKIA.CanvasKit().XYWHRect(0,0,this.transformCanvas.w,this.transformCanvas.h), SKIA.CanvasKit().ClipOp.Intersect, true);
 
     this.renderFrame(this.renderedFrame, true);
 };
@@ -8443,10 +8442,11 @@ SkiaCanvasRenderer.prototype.destroy = function () {
 
 // 在给定的矩形内清除指定的像素
 SkiaCanvasRenderer.prototype.clearRect = function (x, y, width, height) {
-    const paint = new this.canvasKit.SkPaint();
-    paint.setStyle(this.canvasKit.PaintStyle.Fill);
-    paint.setBlendMode(this.canvasKit.BlendMode.Clear);
-    this.skcanvas.drawRect(this.canvasKit.XYWHRect(x, y, width, height), paint);
+    var CK = SKIA.CanvasKit();
+    const paint = new CK.SkPaint();
+    paint.setStyle(SKIA.CanvasKit().PaintStyle.Fill);
+    paint.setBlendMode(SKIA.CanvasKit().BlendMode.Clear);
+    this.skcanvas.drawRect(SKIA.CanvasKit().XYWHRect(x, y, width, height), paint);
 }
 
 SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {
@@ -12385,7 +12385,6 @@ SkiaBaseElement.prototype = {
     initRendererElement: function(){},
     createContainerElements: function(){
         this.skcanvas = this.globalData.skcanvas;
-        this.canvasKit = this.globalData.canvasKit;
         this.renderableEffectsManager = new SkiaEffects(this);
     },
     createContent: function(){},
@@ -12475,15 +12474,15 @@ SkiaImageElement.prototype.createContent = function(){
             widthCrop = imgW;
             heightCrop = widthCrop/canvasRel;
         }
-        this.srcRect = this.canvasKit.XYWHRect((imgW-widthCrop)/2,(imgH-heightCrop)/2,widthCrop,heightCrop);
-        this.dstRect = this.canvasKit.XYWHRect(0,0,this.assetData.w,this.assetData.h);
+        this.srcRect = SKIA.CanvasKit().XYWHRect((imgW-widthCrop)/2,(imgH-heightCrop)/2,widthCrop,heightCrop);
+        this.dstRect = SKIA.CanvasKit().XYWHRect(0,0,this.assetData.w,this.assetData.h);
     }
 
 };
 
 SkiaImageElement.prototype.renderInnerContent = function(parentMatrix){
     // 图片二进制数据 => skimage => skia绘制
-    let skImg = this.canvasKit.MakeImageFromEncoded(this.img);
+    let skImg = SKIA.CanvasKit().MakeImageFromEncoded(this.img);
 
     if (this.srcRect && this.dstRect) {
         this.skcanvas.drawImageRect(skImg,srcRect,dstRect,null,false);
@@ -12507,13 +12506,14 @@ function SkiaCompElement(data, globalData, comp) {
 extendPrototype([SkiaCanvasRenderer, ICompElement, SkiaBaseElement], SkiaCompElement);
 
 SkiaCompElement.prototype.renderInnerContent = function() {
-    const path = new this.canvasKit.SkPath();
+    var CK = SKIA.CanvasKit();
+    const path =new CK.SkPath();
     path.moveTo(0,0);
     path.lineTo(this.data.w,0);
     path.lineTo(this.data.w, this.data.h);
     path.lineTo(0, this.data.h);
     path.lineTo(0,0);
-    this.skcanvas.clipPath(path,this.canvasKit.ClipOp.Intersect,true);
+    this.skcanvas.clipPath(path,SKIA.CanvasKit().ClipOp.Intersect,true);
     var i,len = this.layers.length;
     for( i = len - 1; i >= 0; i -= 1 ){
         if(this.completeLayers || this.elements[i]){
@@ -12558,7 +12558,8 @@ SkiaMaskElement.prototype.renderFrame = function () {
     var transform = this.element.finalTransform.mat;
     var i, len = this.masksProperties.length;
     var pt,pts,data;
-    const path = new this.canvasKit.SkPath();
+    var CK = new SKIA.CanvasKit();
+    const path = CK.SkPath();
     for (i = 0; i < len; i++) {
         if(this.masksProperties[i].mode !== 'n'){
             if (this.masksProperties[i].inv) {
@@ -12581,7 +12582,8 @@ SkiaMaskElement.prototype.renderFrame = function () {
         }
     }
     this.element.globalData.renderer.save(true);
-    this.skcanvas.clipPath(path,this.canvasKit.ClipOp.Intersect,true)
+    this.skcanvas.clipPath(path,SKIA.CanvasKit().ClipOp.Intersect,true);
+    path.delete();
 };
 
 SkiaMaskElement.prototype.getMaskProperty = MaskElement.prototype.getMaskProperty;
@@ -12602,11 +12604,12 @@ function SkiaShapeElement(data, globalData, comp) {
     this.initElement(data, globalData, comp);
 
     // 绘制路径
-    this.curPath = new this.canvasKit.SkPath();
+    var CK = SKIA.CanvasKit();
+    this.curPath =new CK.SkPath();
     // 填充工具
-    this.fill = new SkiaFill(this.canvasKit);
+    this.fill = new SkiaFill();
     // 画笔工具
-    this.stroke = new SkiaStroke(this.canvasKit);
+    this.stroke = new SkiaStroke();
     // 内存回收
     this._toCleanUp = [];
 
@@ -13067,8 +13070,12 @@ SkiaShapeElement.prototype.destroy = function () {
 
 
 function SkiaSolidElement(data, globalData, comp) {
-    this.initElement(data,globalData,comp);
-    this.paint = new this.canvasKit.SkPaint();
+    this.initElement(data, globalData, comp);
+
+    // method 1
+    var CK = SKIA.CanvasKit();
+    this.paint = new CK.SkPaint();
+
 }
 extendPrototype([BaseElement, TransformElement, SkiaBaseElement, HierarchyElement, FrameElement, RenderableElement], SkiaSolidElement);
 
@@ -13076,13 +13083,13 @@ SkiaSolidElement.prototype.initElement = SVGShapeElement.prototype.initElement;
 SkiaSolidElement.prototype.prepareFrame = IImageElement.prototype.prepareFrame;
 
 
-SkiaSolidElement.prototype.renderInnerContent = function() {
+SkiaSolidElement.prototype.renderInnerContent = function () {
 
     //skia solid render
-    this.paint.setColor(ColorUtil.parseColor(this.canvasKit,this.data.sc));
-    this.paint.setStyle(this.canvasKit.PaintStyle.Fill);
+    this.paint.setColor(ColorUtil.parseColor(this.data.sc));
+    this.paint.setStyle(SKIA.CanvasKit().PaintStyle.Fill);
     this.paint.setAntiAlias(true);
-    this.skcanvas.drawRect(this.canvasKit.XYWHRect(0, 0, this.data.sw, this.data.sh),  this.paint);
+    this.skcanvas.drawRect(SKIA.CanvasKit().XYWHRect(0, 0, this.data.sw, this.data.sh), this.paint);
 };
 
 SkiaSolidElement.prototype.destroy = function () {
@@ -14325,7 +14332,7 @@ AnimationItem.prototype.setParams = function (params) {
             this.renderer = new CanvasRenderer(this, params.rendererSettings);
             break;
         case 'skia':
-            this.renderer = new SkiaCanvasRenderer(this, params.canvasKit, params.rendererSettings);
+            this.renderer = new SkiaCanvasRenderer(this, params.rendererSettings);
             break;
         case 'svg':
             this.renderer = new SVGRenderer(this, params.rendererSettings);
@@ -17502,7 +17509,6 @@ function loadAnimation3(params) {
         if (standalone === true) {
             params.animationData = JSON.parse(animationData);
         }
-        params.canvasKit = CanvasKit;
         SKIA.setCanvasKit(CanvasKit);
         return animationManager.loadAnimation(params);
     });

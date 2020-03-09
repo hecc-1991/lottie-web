@@ -11,11 +11,12 @@ function SkiaShapeElement(data, globalData, comp) {
     this.initElement(data, globalData, comp);
 
     // 绘制路径
-    this.curPath = new this.canvasKit.SkPath();
+    var CK = SKIA.CanvasKit();
+    this.curPath =new CK.SkPath();
     // 填充工具
-    this.fill = new SkiaFill(this.canvasKit);
+    this.fill = new SkiaFill();
     // 画笔工具
-    this.stroke = new SkiaStroke(this.canvasKit);
+    this.stroke = new SkiaStroke();
     // 内存回收
     this._toCleanUp = [];
 

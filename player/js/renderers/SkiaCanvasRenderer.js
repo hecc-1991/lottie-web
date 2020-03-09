@@ -1,5 +1,4 @@
 function SkiaCanvasRenderer(animationItem, canvasKit, config) {
-    this.canvasKit = canvasKit;
     this.animationItem = animationItem;
     this.renderConfig = {
         clearCanvas: (config && config.clearCanvas !== undefined) ? config.clearCanvas : true,
@@ -88,7 +87,7 @@ SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
  */
 SkiaCanvasRenderer.prototype.resetTransform = function () {
     let mat = this.skcanvas.getTotalMatrix();
-    mat = this.canvasKit.SkMatrix.invert(mat);
+    mat = SKIA.CanvasKit().SkMatrix.invert(mat);
     this.skcanvas.concat(mat);
 };
 
@@ -217,7 +216,7 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
             this.animationItem.container.setAttribute('id', 'skia');
         }
 
-        this.surface = this.canvasKit.MakeCanvasSurface(this.animationItem.container.id);
+        this.surface = SKIA.CanvasKit().MakeCanvasSurface(this.animationItem.container.id);
         if (!(this.surface)) {
             throw 'Could not make surface';
         }
@@ -237,7 +236,7 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         ty: 0
     };
     this.setupGlobalData(animData, document.body);
-    this.globalData.canvasKit = this.canvasKit;
+    this.globalData.canvasKit = SKIA.CanvasKit();
     this.globalData.skcanvas = this.skcanvas;
     this.globalData.renderer = this;
     this.globalData.isDashed = false;
@@ -313,7 +312,7 @@ SkiaCanvasRenderer.prototype.updateContainerSize = function () {
 
     this.ctxTransform(this.transformCanvas.props);
 
-    this.skcanvas.clipRect(this.canvasKit.XYWHRect(0,0,this.transformCanvas.w,this.transformCanvas.h), this.canvasKit.ClipOp.Intersect, true);
+    this.skcanvas.clipRect(SKIA.CanvasKit().XYWHRect(0,0,this.transformCanvas.w,this.transformCanvas.h), SKIA.CanvasKit().ClipOp.Intersect, true);
 
     this.renderFrame(this.renderedFrame, true);
 };
@@ -339,10 +338,11 @@ SkiaCanvasRenderer.prototype.destroy = function () {
 
 // 在给定的矩形内清除指定的像素
 SkiaCanvasRenderer.prototype.clearRect = function (x, y, width, height) {
-    const paint = new this.canvasKit.SkPaint();
-    paint.setStyle(this.canvasKit.PaintStyle.Fill);
-    paint.setBlendMode(this.canvasKit.BlendMode.Clear);
-    this.skcanvas.drawRect(this.canvasKit.XYWHRect(x, y, width, height), paint);
+    var CK = SKIA.CanvasKit();
+    const paint = new CK.SkPaint();
+    paint.setStyle(SKIA.CanvasKit().PaintStyle.Fill);
+    paint.setBlendMode(SKIA.CanvasKit().BlendMode.Clear);
+    this.skcanvas.drawRect(SKIA.CanvasKit().XYWHRect(x, y, width, height), paint);
 }
 
 SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {

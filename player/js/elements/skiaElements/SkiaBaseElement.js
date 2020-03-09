@@ -6,7 +6,6 @@ SkiaBaseElement.prototype = {
     initRendererElement: function(){},
     createContainerElements: function(){
         this.skcanvas = this.globalData.skcanvas;
-        this.canvasKit = this.globalData.canvasKit;
         this.renderableEffectsManager = new SkiaEffects(this);
     },
     createContent: function(){},

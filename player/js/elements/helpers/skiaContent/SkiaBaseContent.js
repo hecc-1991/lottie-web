@@ -1,10 +1,10 @@
-function SkiaBaseContent(canvasKit) {
-    this.canvasKit = canvasKit;
+function SkiaBaseContent() {
     this.alpha = 1;
-    this.transform = this.canvasKit.SkMatrix.identity();
-    this.paint = new this.canvasKit.SkPaint();
+    this.transform = SKIA.CanvasKit().SkMatrix.identity();
+    var CK = SKIA.CanvasKit();
+    this.paint = new CK.SkPaint();
 
-    this.shadowColor = this.canvasKit.TRANSPARENT;
+    this.shadowColor = SKIA.CanvasKit().TRANSPARENT;
     this.shadowBlur = 0;
     this.shadowOffsetX = 0;
     this.shadowOffsetY = 0;
@@ -30,7 +30,7 @@ function SkiaBaseContent(canvasKit) {
     this._shadowOffsetMatrix = function () {
         var sx = this.transform[0];
         var sy = this.transform[4];
-        return this.canvasKit.SkMatrix.translated(this.shadowOffsetX / sx, this.shadowOffsetY / sy);
+        return SKIA.CanvasKit().SkMatrix.translated(this.shadowOffsetX / sx, this.shadowOffsetY / sy);
     }
 
     this.SkBlurRadiusToSigma = function (radius) {
@@ -52,9 +52,9 @@ function SkiaBaseContent(canvasKit) {
     // paint with a blur maskfilter and the correct color.
     this._shadowPaint = function (basePaint) {
         // multiply first to see if the alpha channel goes to 0 after multiplication.
-        var alphaColor = this.canvasKit.multiplyByAlpha(this.shadowColor, this.alpha);
+        var alphaColor = SKIA.CanvasKit().multiplyByAlpha(this.shadowColor, this.alpha);
         // if alpha is zero, no shadows
-        if (!this.canvasKit.getColorComponents(alphaColor)[3]) {
+        if (!SKIA.CanvasKit().getColorComponents(alphaColor)[3]) {
             return null;
         }
         // one of these must also be non-zero (otherwise the shadow is
@@ -64,7 +64,7 @@ function SkiaBaseContent(canvasKit) {
         }
         var shadowPaint = basePaint.copy();
         shadowPaint.setColor(alphaColor);
-        var blurEffect = this.canvasKit.SkMaskFilter.MakeBlur(this.canvasKit.BlurStyle.Normal,
+        var blurEffect = SKIA.CanvasKit().SkMaskFilter.MakeBlur(SKIA.CanvasKit().BlurStyle.Normal,
             SkBlurRadiusToSigma(this.shadowBlur),
             false);
         shadowPaint.setMaskFilter(blurEffect);

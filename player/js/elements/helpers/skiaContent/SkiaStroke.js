@@ -5,15 +5,15 @@ function SkiaStroke(canvasKit) {
  * 设置画笔风格
  */
     this.setStrokeStyle = function (strokeStyle) {
-        this.paint.setStyle(this.canvasKit.PaintStyle.Stroke);
+        this.paint.setStyle(SKIA.CanvasKit().PaintStyle.Stroke);
         if (typeof strokeStyle === 'string') {
-            var ss = ColorUtil.parseColor(this.canvasKit, fillStyle);
-            var alphaColor = this.canvasKit.multiplyByAlpha(ss, this.alpha);
+            var ss = ColorUtil.parseColor(fillStyle);
+            var alphaColor = SKIA.CanvasKit().multiplyByAlpha(ss, this.alpha);
             this.paint.setColor(alphaColor);
         } else if (strokeStyle._getShader) {
             // It's probably an effect.
             var shader = strokeStyle._getShader(this.transform);
-            this.paint.setColor(this.canvasKit.Color(0, 0, 0, this.alpha));
+            this.paint.setColor(SKIA.CanvasKit().Color(0, 0, 0, this.alpha));
             this.paint.setShader(shader);
         }
 
@@ -29,13 +29,13 @@ function SkiaStroke(canvasKit) {
     this.setStrokeCap = function (cap) {
         switch (cap) {
             case 'butt':
-                this.paint.setStrokeCap(this.canvasKit.StrokeCap.Butt);
+                this.paint.setStrokeCap(SKIA.CanvasKit().StrokeCap.Butt);
                 return;
             case 'round':
-                this.paint.setStrokeCap(this.canvasKit.StrokeCap.Round);
+                this.paint.setStrokeCap(SKIA.CanvasKit().StrokeCap.Round);
                 return;
             case 'square':
-                this.paint.setStrokeCap(this.canvasKit.StrokeCap.Square);
+                this.paint.setStrokeCap(SKIA.CanvasKit().StrokeCap.Square);
                 return;
         }
     }
@@ -46,13 +46,13 @@ function SkiaStroke(canvasKit) {
     this.setStrokeJoin = function (join) {
         switch (join) {
             case 'miter':
-                this.paint.setStrokeJoin(this.canvasKit.StrokeJoin.Miter);
+                this.paint.setStrokeJoin(SKIA.CanvasKit().StrokeJoin.Miter);
                 return;
             case 'round':
-                this.paint.setStrokeJoin(this.canvasKit.StrokeJoin.Round);
+                this.paint.setStrokeJoin(SKIA.CanvasKit().StrokeJoin.Round);
                 return;
             case 'bevel':
-                this.paint.setStrokeJoin(this.canvasKit.StrokeJoin.Bevel);
+                this.paint.setStrokeJoin(SKIA.CanvasKit().StrokeJoin.Bevel);
                 return;
         }
     }
@@ -87,7 +87,7 @@ function SkiaStroke(canvasKit) {
         }
 
         if (dashes.length) {
-            var dashedEffect = this.canvasKit.MakeSkDashPathEffect(dashes, lineDashOffset);
+            var dashedEffect = SKIA.CanvasKit().MakeSkDashPathEffect(dashes, lineDashOffset);
             this.paint.setPathEffect(dashedEffect);
         }
 

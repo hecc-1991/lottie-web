@@ -5,15 +5,15 @@ function SkiaFill(canvasKit) {
  * 创建填充
  */
     this.setFillStyle = function (fillStyle) {
-        this.paint.setStyle(this.canvasKit.PaintStyle.Fill);
+        this.paint.setStyle(SKIA.CanvasKit().PaintStyle.Fill);
         if (typeof fillStyle === 'string') {
-            var fs = ColorUtil.parseColor(this.canvasKit, fillStyle);
-            var alphaColor = this.canvasKit.multiplyByAlpha(fs, this.alpha);
+            var fs = ColorUtil.parseColor( fillStyle);
+            var alphaColor = SKIA.CanvasKit().multiplyByAlpha(fs, this.alpha);
             this.paint.setColor(alphaColor);
         } else if (fillStyle._getShader) {
             // It's an effect that has a shader.
             var shader = fillStyle._getShader(this.transform);
-            this.paint.setColor(this.canvasKit.Color(0, 0, 0, this.alpha));
+            this.paint.setColor(SKIA.CanvasKit().Color(0, 0, 0, this.alpha));
             this.paint.setShader(shader);
         }
 
@@ -36,9 +36,9 @@ function SkiaFill(canvasKit) {
         }
 
         if (fillRule === 'evenodd') {
-            path.setFillType(this.canvasKit.FillType.EvenOdd);
+            path.setFillType(SKIA.CanvasKit().FillType.EvenOdd);
         } else if (fillRule === 'nonzero' || !fillRule) {
-            path.setFillType(this.canvasKit.FillType.Winding);
+            path.setFillType(SKIA.CanvasKit().FillType.Winding);
         }
 
         var shadowPaint = this._shadowPaint(this.paint);
