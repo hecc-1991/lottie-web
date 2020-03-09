@@ -115,8 +115,10 @@ BaseRenderer.prototype.setupGlobalData = function(animData, fontsContainer) {
     this.globalData.fontManager.addChars(animData.chars);
     this.globalData.fontManager.addFonts(animData.fonts, fontsContainer);
     this.globalData.getAssetData = this.animationItem.getAssetData.bind(this.animationItem);
+    this.globalData.getFontData = this.animationItem.getFontData.bind(this.animationItem);
     this.globalData.getAssetsPath = this.animationItem.getAssetsPath.bind(this.animationItem);
     this.globalData.imageLoader = this.animationItem.imagePreloader;
+    this.globalData.fontLoader = this.animationItem.fontPreloader;
     this.globalData.frameId = 0;
     this.globalData.frameRate = animData.fr;
     this.globalData.nm = animData.nm;

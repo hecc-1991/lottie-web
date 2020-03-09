@@ -88,9 +88,19 @@ var ColorUtil = (function () {
         return SKIA.CanvasKit().BLACK;
     }
 
+    function parseArray(colorArray) {
+        if (!colorArray) {
+            return SKIA.CanvasKit().BLACK;
+        }
+
+        return SKIA.CanvasKit().Color(colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, 1);
+
+    }
+
     return {
-        colorToString:colorToString,
-        valueOrPercent:valueOrPercent,
-        parseColor:parseColor
+        colorToString: colorToString,
+        valueOrPercent: valueOrPercent,
+        parseColor: parseColor,
+        parseArray: parseArray
     };
 }());

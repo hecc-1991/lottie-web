@@ -453,16 +453,16 @@ function SkiaBaseContent() {
 }
 
 
-function SkiaFill(canvasKit) {
-    SkiaBaseContent.call(this, canvasKit);
+function SkiaFill() {
+    SkiaBaseContent.call(this);
 
     /**
- * 创建填充
- */
+     * 创建填充
+    */
     this.setFillStyle = function (fillStyle) {
         this.paint.setStyle(SKIA.CanvasKit().PaintStyle.Fill);
         if (typeof fillStyle === 'string') {
-            var fs = ColorUtil.parseColor( fillStyle);
+            var fs = ColorUtil.parseColor(fillStyle);
             var alphaColor = SKIA.CanvasKit().multiplyByAlpha(fs, this.alpha);
             this.paint.setColor(alphaColor);
         } else if (fillStyle._getShader) {
@@ -480,7 +480,7 @@ function SkiaFill(canvasKit) {
         }
     }
 
-    
+
     /**
      * 填充操作
      */
@@ -515,12 +515,13 @@ function SkiaFill(canvasKit) {
 
 
 
-function SkiaStroke(canvasKit) {
-    SkiaBaseContent.call(this, canvasKit);
+function SkiaStroke() {
+
+    SkiaBaseContent.call(this);
 
     /**
- * 设置画笔风格
- */
+    * 设置画笔风格
+    */
     this.setStrokeStyle = function (strokeStyle) {
         this.paint.setStyle(SKIA.CanvasKit().PaintStyle.Stroke);
         if (typeof strokeStyle === 'string') {
@@ -934,10 +935,20 @@ var ColorUtil = (function () {
         return SKIA.CanvasKit().BLACK;
     }
 
+    function parseArray(colorArray) {
+        if (!colorArray) {
+            return SKIA.CanvasKit().BLACK;
+        }
+
+        return SKIA.CanvasKit().Color(colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, 1);
+
+    }
+
     return {
-        colorToString:colorToString,
-        valueOrPercent:valueOrPercent,
-        parseColor:parseColor
+        colorToString: colorToString,
+        valueOrPercent: valueOrPercent,
+        parseColor: parseColor,
+        parseArray: parseArray
     };
 }());
 /**
@@ -3281,87 +3292,87 @@ function dataFunctionManager(){
 
 var dataManager = dataFunctionManager();
 
-var FontManager = (function(){
+var FontManager = (function () {
 
     var maxWaitingTime = 5000;
     var emptyChar = {
         w: 0,
-        size:0,
-        shapes:[]
+        size: 0,
+        shapes: []
     };
     var combinedCharacters = [];
     //Hindi characters
     combinedCharacters = combinedCharacters.concat([2304, 2305, 2306, 2307, 2362, 2363, 2364, 2364, 2366
-    , 2367, 2368, 2369, 2370, 2371, 2372, 2373, 2374, 2375, 2376, 2377, 2378, 2379
-    , 2380, 2381, 2382, 2383, 2387, 2388, 2389, 2390, 2391, 2402, 2403]);
+        , 2367, 2368, 2369, 2370, 2371, 2372, 2373, 2374, 2375, 2376, 2377, 2378, 2379
+        , 2380, 2381, 2382, 2383, 2387, 2388, 2389, 2390, 2391, 2402, 2403]);
 
-    function setUpNode(font, family){
+    function setUpNode(font, family) {
         var parentNode = createTag('span');
-        parentNode.style.fontFamily    = family;
+        parentNode.style.fontFamily = family;
         var node = createTag('span');
         // Characters that vary significantly among different fonts
         node.innerHTML = 'giItT1WQy@!-/#';
         // Visible - so we can measure it - but not on the screen
-        parentNode.style.position      = 'absolute';
-        parentNode.style.left          = '-10000px';
-        parentNode.style.top           = '-10000px';
+        parentNode.style.position = 'absolute';
+        parentNode.style.left = '-10000px';
+        parentNode.style.top = '-10000px';
         // Large font size makes even subtle changes obvious
-        parentNode.style.fontSize      = '300px';
+        parentNode.style.fontSize = '300px';
         // Reset any font properties
-        parentNode.style.fontVariant   = 'normal';
-        parentNode.style.fontStyle     = 'normal';
-        parentNode.style.fontWeight    = 'normal';
+        parentNode.style.fontVariant = 'normal';
+        parentNode.style.fontStyle = 'normal';
+        parentNode.style.fontWeight = 'normal';
         parentNode.style.letterSpacing = '0';
         parentNode.appendChild(node);
         document.body.appendChild(parentNode);
 
         // Remember width with no applied web font
         var width = node.offsetWidth;
-        node.style.fontFamily = font + ', '+family;
-        return {node:node, w:width, parent:parentNode};
+        node.style.fontFamily = font + ', ' + family;
+        return { node: node, w: width, parent: parentNode };
     }
 
     function checkLoadedFonts() {
         var i, len = this.fonts.length;
         var node, w;
         var loadedCount = len;
-        for(i=0;i<len; i+= 1){
-            if(this.fonts[i].loaded){
+        for (i = 0; i < len; i += 1) {
+            if (this.fonts[i].loaded) {
                 loadedCount -= 1;
                 continue;
             }
-            if(this.fonts[i].fOrigin === 'n' || this.fonts[i].origin === 0){
+            if (this.fonts[i].fOrigin === 'n' || this.fonts[i].origin === 0) {
                 this.fonts[i].loaded = true;
-            } else{
+            } else {
                 node = this.fonts[i].monoCase.node;
                 w = this.fonts[i].monoCase.w;
-                if(node.offsetWidth !== w){
+                if (node.offsetWidth !== w) {
                     loadedCount -= 1;
                     this.fonts[i].loaded = true;
-                }else{
+                } else {
                     node = this.fonts[i].sansCase.node;
                     w = this.fonts[i].sansCase.w;
-                    if(node.offsetWidth !== w){
+                    if (node.offsetWidth !== w) {
                         loadedCount -= 1;
                         this.fonts[i].loaded = true;
                     }
                 }
-                if(this.fonts[i].loaded){
+                if (this.fonts[i].loaded) {
                     this.fonts[i].sansCase.parent.parentNode.removeChild(this.fonts[i].sansCase.parent);
                     this.fonts[i].monoCase.parent.parentNode.removeChild(this.fonts[i].monoCase.parent);
                 }
             }
         }
 
-        if(loadedCount !== 0 && Date.now() - this.initTime < maxWaitingTime){
-            setTimeout(this.checkLoadedFonts.bind(this),20);
-        }else{
-            setTimeout(function(){this.isLoaded = true;}.bind(this),0);
+        if (loadedCount !== 0 && Date.now() - this.initTime < maxWaitingTime) {
+            setTimeout(this.checkLoadedFonts.bind(this), 20);
+        } else {
+            setTimeout(function () { this.isLoaded = true; }.bind(this), 0);
 
         }
     }
 
-    function createHelper(def, fontData){
+    function createHelper(def, fontData) {
         var tHelper = createNS('text');
         tHelper.style.fontSize = '100px';
         //tHelper.style.fontFamily = fontData.fFamily;
@@ -3369,7 +3380,7 @@ var FontManager = (function(){
         tHelper.setAttribute('font-style', fontData.fStyle);
         tHelper.setAttribute('font-weight', fontData.fWeight);
         tHelper.textContent = '1';
-        if(fontData.fClass){
+        if (fontData.fClass) {
             tHelper.style.fontFamily = 'inherit';
             tHelper.setAttribute('class', fontData.fClass);
         } else {
@@ -3377,17 +3388,17 @@ var FontManager = (function(){
         }
         def.appendChild(tHelper);
         var tCanvasHelper = createTag('canvas').getContext('2d');
-        tCanvasHelper.font = fontData.fWeight + ' ' + fontData.fStyle + ' 100px '+ fontData.fFamily;
+        tCanvasHelper.font = fontData.fWeight + ' ' + fontData.fStyle + ' 100px ' + fontData.fFamily;
         //tCanvasHelper.font = ' 100px '+ fontData.fFamily;
         return tHelper;
     }
 
-    function addFonts(fontData, defs){
-        if(!fontData){
+    function addFonts(fontData, defs) {
+        if (!fontData) {
             this.isLoaded = true;
             return;
         }
-        if(this.chars){
+        if (this.chars) {
             this.isLoaded = true;
             this.fonts = fontData.list;
             return;
@@ -3397,18 +3408,18 @@ var FontManager = (function(){
         var fontArr = fontData.list;
         var i, len = fontArr.length;
         var _pendingFonts = len;
-        for(i=0; i<len; i+= 1){
+        for (i = 0; i < len; i += 1) {
             var shouldLoadFont = true;
             var loadedSelector;
             var j;
             fontArr[i].loaded = false;
-            fontArr[i].monoCase = setUpNode(fontArr[i].fFamily,'monospace');
-            fontArr[i].sansCase = setUpNode(fontArr[i].fFamily,'sans-serif');
-            if(!fontArr[i].fPath) {
+            fontArr[i].monoCase = setUpNode(fontArr[i].fFamily, 'monospace');
+            fontArr[i].sansCase = setUpNode(fontArr[i].fFamily, 'sans-serif');
+            if (!fontArr[i].fPath) {
                 fontArr[i].loaded = true;
                 _pendingFonts -= 1;
-            }else if(fontArr[i].fOrigin === 'p' || fontArr[i].origin === 3){
-                loadedSelector = document.querySelectorAll('style[f-forigin="p"][f-family="'+ fontArr[i].fFamily +'"], style[f-origin="3"][f-family="'+ fontArr[i].fFamily +'"]');
+            } else if (fontArr[i].fOrigin === 'p' || fontArr[i].origin === 3) {
+                loadedSelector = document.querySelectorAll('style[f-forigin="p"][f-family="' + fontArr[i].fFamily + '"], style[f-origin="3"][f-family="' + fontArr[i].fFamily + '"]');
 
                 if (loadedSelector.length > 0) {
                     shouldLoadFont = false;
@@ -3420,10 +3431,10 @@ var FontManager = (function(){
                     s.setAttribute('f-origin', fontArr[i].origin);
                     s.setAttribute('f-family', fontArr[i].fFamily);
                     s.type = "text/css";
-                    s.innerHTML = "@font-face {" + "font-family: "+fontArr[i].fFamily+"; font-style: normal; src: url('"+fontArr[i].fPath+"');}";
+                    s.innerHTML = "@font-face {" + "font-family: " + fontArr[i].fFamily + "; font-style: normal; src: url('" + fontArr[i].fPath + "');}";
                     defs.appendChild(s);
                 }
-            } else if(fontArr[i].fOrigin === 'g' || fontArr[i].origin === 1){
+            } else if (fontArr[i].fOrigin === 'g' || fontArr[i].origin === 1) {
                 loadedSelector = document.querySelectorAll('link[f-forigin="g"], link[f-origin="1"]');
 
                 for (j = 0; j < loadedSelector.length; j++) {
@@ -3442,7 +3453,7 @@ var FontManager = (function(){
                     l.href = fontArr[i].fPath;
                     document.body.appendChild(l);
                 }
-            } else if(fontArr[i].fOrigin === 't' || fontArr[i].origin === 2){
+            } else if (fontArr[i].fOrigin === 't' || fontArr[i].origin === 2) {
                 loadedSelector = document.querySelectorAll('script[f-forigin="t"], script[f-origin="2"]');
 
                 for (j = 0; j < loadedSelector.length; j++) {
@@ -3456,12 +3467,12 @@ var FontManager = (function(){
                     var sc = createTag('link');
                     sc.setAttribute('f-forigin', fontArr[i].fOrigin);
                     sc.setAttribute('f-origin', fontArr[i].origin);
-                    sc.setAttribute('rel','stylesheet');
-                    sc.setAttribute('href',fontArr[i].fPath);
+                    sc.setAttribute('rel', 'stylesheet');
+                    sc.setAttribute('href', fontArr[i].fPath);
                     defs.appendChild(sc);
                 }
             }
-            fontArr[i].helper = createHelper(defs,fontArr[i]);
+            fontArr[i].helper = createHelper(defs, fontArr[i]);
             fontArr[i].cache = {};
             this.fonts.push(fontArr[i]);
         }
@@ -3470,45 +3481,48 @@ var FontManager = (function(){
         } else {
             //On some cases even if the font is loaded, it won't load correctly when measuring text on canvas.
             //Adding this timeout seems to fix it
-           setTimeout(this.checkLoadedFonts.bind(this), 100);
+            setTimeout(this.checkLoadedFonts.bind(this), 100);
         }
     }
 
-    function addChars(chars){
-        if(!chars){
+    function addChars(chars) {
+        if (!chars) {
             return;
         }
-        if(!this.chars){
+        if (!this.chars) {
             this.chars = [];
         }
         var i, len = chars.length;
         var j, jLen = this.chars.length, found;
-        for(i=0;i<len;i+=1){
+        for (i = 0; i < len; i += 1) {
             j = 0;
             found = false;
-            while(j<jLen){
-                if(this.chars[j].style === chars[i].style && this.chars[j].fFamily === chars[i].fFamily && this.chars[j].ch === chars[i].ch){
+            while (j < jLen) {
+                if (this.chars[j].style === chars[i].style && this.chars[j].fFamily === chars[i].fFamily && this.chars[j].ch === chars[i].ch) {
                     found = true;
                 }
                 j += 1;
             }
-            if(!found){
+            if (!found) {
                 this.chars.push(chars[i]);
                 jLen += 1;
             }
         }
     }
 
-    function getCharData(char, style, font){
+    function getCharData(char, style, font) {
+        if (!this.chars) {
+            return;
+        }
         var i = 0, len = this.chars.length;
-        while( i < len) {
-            if(this.chars[i].ch === char && this.chars[i].style === style && this.chars[i].fFamily === font){
+        while (i < len) {
+            if (this.chars[i].ch === char && this.chars[i].style === style && this.chars[i].fFamily === font) {
 
                 return this.chars[i];
             }
-            i+= 1;
+            i += 1;
         }
-        if((typeof char === 'string' && char.charCodeAt(0) !== 13 || !char) && console && console.warn) {
+        if ((typeof char === 'string' && char.charCodeAt(0) !== 13 || !char) && console && console.warn) {
             console.warn('Missing character from exported characters list: ', char, style, font);
         }
         return emptyChar;
@@ -3517,7 +3531,7 @@ var FontManager = (function(){
     function measureText(char, fontName, size) {
         var fontData = this.getFontByName(fontName);
         var index = char.charCodeAt(0);
-        if(!fontData.cache[index + 1]) {
+        if (!fontData.cache[index + 1]) {
             var tHelper = fontData.helper;
             //Canvas version
             //fontData.cache[index] = tHelper.measureText(char).width / 100;
@@ -3528,19 +3542,19 @@ var FontManager = (function(){
                 var doubleSize = tHelper.getComputedTextLength();
                 tHelper.textContent = '||';
                 var singleSize = tHelper.getComputedTextLength();
-                fontData.cache[index + 1] = (doubleSize - singleSize)/100;
+                fontData.cache[index + 1] = (doubleSize - singleSize) / 100;
             } else {
                 tHelper.textContent = char;
-                fontData.cache[index + 1] = (tHelper.getComputedTextLength())/100;
+                fontData.cache[index + 1] = (tHelper.getComputedTextLength()) / 100;
             }
         }
         return fontData.cache[index + 1] * size;
     }
 
-    function getFontByName(name){
+    function getFontByName(name) {
         var i = 0, len = this.fonts.length;
-        while(i<len){
-            if(this.fonts[i].fName === name) {
+        while (i < len) {
+            if (this.fonts[i].fName === name) {
                 return this.fonts[i];
             }
             i += 1;
@@ -3556,7 +3570,7 @@ var FontManager = (function(){
         return this.isLoaded;
     }
 
-    var Font = function(){
+    var Font = function () {
         this.fonts = [];
         this.chars = null;
         this.typekitLoaded = 0;
@@ -5854,7 +5868,7 @@ var FontPreloader = (function () {
             .then(buffer => {
                 const fontMgr = SKIA.CanvasKit().SkFontMgr.RefDefault();
                 ob.font = fontMgr.MakeTypefaceFromData(buffer);
-                _toCleanUp.push(ob.font);
+                this._toCleanUp.push(ob.font);
                 this._fontLoaded();
             });
 
@@ -5878,6 +5892,16 @@ var FontPreloader = (function () {
         }
     }
 
+    function getFont(fontData) {
+        var i = 0, len = this.fonts.length;
+        while (i < len) {
+            if (this.fonts[i].fontData === fontData) {
+                return this.fonts[i].font;
+            }
+            i += 1;
+        }
+    }
+
     function destroy() {
         this.fontsLoadedCb = null;
         this.fonts.length = 0;
@@ -5894,8 +5918,9 @@ var FontPreloader = (function () {
         this.loadAssetsBinary = loadAssetsBinary;
         this._createFontBinaryData = createFontBinaryData;
         this.loaded = loaded;
-        this._fontLoaded = fontLoaded;
         this.destroy = destroy;
+        this.getFont = getFont;
+        this._fontLoaded = fontLoaded;
         this.fontsPath = '';
         this.path = '';
         this.totalFonts = 0;
@@ -7503,8 +7528,10 @@ BaseRenderer.prototype.setupGlobalData = function(animData, fontsContainer) {
     this.globalData.fontManager.addChars(animData.chars);
     this.globalData.fontManager.addFonts(animData.fonts, fontsContainer);
     this.globalData.getAssetData = this.animationItem.getAssetData.bind(this.animationItem);
+    this.globalData.getFontData = this.animationItem.getFontData.bind(this.animationItem);
     this.globalData.getAssetsPath = this.animationItem.getAssetsPath.bind(this.animationItem);
     this.globalData.imageLoader = this.animationItem.imagePreloader;
+    this.globalData.fontLoader = this.animationItem.fontPreloader;
     this.globalData.frameId = 0;
     this.globalData.frameRate = animData.fr;
     this.globalData.nm = animData.nm;
@@ -8102,7 +8129,7 @@ CanvasRenderer.prototype.show = function(){
     this.animationItem.container.style.display = 'block';
 };
 
-function SkiaCanvasRenderer(animationItem, canvasKit, config) {
+function SkiaCanvasRenderer(animationItem, config) {
     this.animationItem = animationItem;
     this.renderConfig = {
         clearCanvas: (config && config.clearCanvas !== undefined) ? config.clearCanvas : true,
@@ -8340,7 +8367,6 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         ty: 0
     };
     this.setupGlobalData(animData, document.body);
-    this.globalData.canvasKit = SKIA.CanvasKit();
     this.globalData.skcanvas = this.skcanvas;
     this.globalData.renderer = this;
     this.globalData.isDashed = false;
@@ -8432,7 +8458,6 @@ SkiaCanvasRenderer.prototype.destroy = function () {
         }
     }
     this.elements.length = 0;
-    this.globalData.canvasKit = null;
     this.globalData.skcanvas = null;
     this.animationItem.container = null;
     this.destroyed = true;
@@ -12558,8 +12583,8 @@ SkiaMaskElement.prototype.renderFrame = function () {
     var transform = this.element.finalTransform.mat;
     var i, len = this.masksProperties.length;
     var pt,pts,data;
-    var CK = new SKIA.CanvasKit();
-    const path = CK.SkPath();
+    var CK = SKIA.CanvasKit();
+    const path = new CK.SkPath();
     for (i = 0; i < len; i++) {
         if(this.masksProperties[i].mode !== 'n'){
             if (this.masksProperties[i].inv) {
@@ -13095,7 +13120,7 @@ SkiaSolidElement.prototype.renderInnerContent = function () {
 SkiaSolidElement.prototype.destroy = function () {
     this.paint.delete();
 };
-function SkiaTextElement(data, globalData, comp){
+function SkiaTextElement(data, globalData, comp) {
     this.textSpans = [];
     this.yOffset = 0;
     this.fillColorAnim = false;
@@ -13112,177 +13137,41 @@ function SkiaTextElement(data, globalData, comp){
         sWidth: 0,
         fValue: ''
     };
-    this.initElement(data,globalData,comp);
-}
-extendPrototype([BaseElement,TransformElement,SkiaBaseElement,HierarchyElement,FrameElement,RenderableElement,ITextElement], SkiaTextElement);
 
-SkiaTextElement.prototype.buildNewText = function(){
+    this.initElement(data, globalData, comp);
+
+    //  获取字体
     var documentData = this.textProperty.currentData;
-    this.renderedLetters = createSizedArray(documentData.l ? documentData.l.length : 0);
+    var fontData = globalData.getFontData(documentData.f);
+    var font = globalData.fontLoader.getFont(fontData);
 
-    var hasFill = false;
-    if(documentData.fc) {
-        hasFill = true;
-        this.values.fill = this.buildColor(documentData.fc);
-    }else{
-        this.values.fill = 'rgba(0,0,0,0)';
-    }
-    this.fill = hasFill;
-    var hasStroke = false;
-    if(documentData.sc){
-        hasStroke = true;
-        this.values.stroke = this.buildColor(documentData.sc);
-        this.values.sWidth = documentData.sw;
-    }
-    var fontData = this.globalData.fontManager.getFontByName(documentData.f);
-    var i, len;
-    var letters = documentData.l;
-    var matrixHelper = this.mHelper;
-    this.stroke = hasStroke;
-    this.values.fValue = documentData.finalSize + 'px '+ this.globalData.fontManager.getFontByName(documentData.f).fFamily;
-    len = documentData.finalText.length;
-    //this.tHelper.font = this.values.fValue;
-    var charData, shapeData, k, kLen, shapes, j, jLen, pathNodes, commands, pathArr, singleShape = this.data.singleShape;
-    var trackingOffset = documentData.tr/1000*documentData.finalSize;
-    var xPos = 0, yPos = 0, firstLine = true;
-    var cnt = 0;
-    for (i = 0; i < len; i += 1) {
-        charData = this.globalData.fontManager.getCharData(documentData.finalText[i], fontData.fStyle, this.globalData.fontManager.getFontByName(documentData.f).fFamily);
-        shapeData = charData && charData.data || {};
-        matrixHelper.reset();
-        if(singleShape && letters[i].n) {
-            xPos = -trackingOffset;
-            yPos += documentData.yOffset;
-            yPos += firstLine ? 1 : 0;
-            firstLine = false;
-        }
+    var CK = SKIA.CanvasKit();
+    this.textFont = new CK.SkFont(font);
+    this.textFont.setSize(documentData.s);
 
-        shapes = shapeData.shapes ? shapeData.shapes[0].it : [];
-        jLen = shapes.length;
-        matrixHelper.scale(documentData.finalSize/100,documentData.finalSize/100);
-        if(singleShape){
-            this.applyTextPropertiesToMatrix(documentData, matrixHelper, letters[i].line, xPos, yPos);
-        }
-        commands = createSizedArray(jLen);
-        for(j=0;j<jLen;j+=1){
-            kLen = shapes[j].ks.k.i.length;
-            pathNodes = shapes[j].ks.k;
-            pathArr = [];
-            for(k=1;k<kLen;k+=1){
-                if(k==1){
-                    pathArr.push(matrixHelper.applyToX(pathNodes.v[0][0],pathNodes.v[0][1],0),matrixHelper.applyToY(pathNodes.v[0][0],pathNodes.v[0][1],0));
-                }
-                pathArr.push(matrixHelper.applyToX(pathNodes.o[k-1][0],pathNodes.o[k-1][1],0),matrixHelper.applyToY(pathNodes.o[k-1][0],pathNodes.o[k-1][1],0),matrixHelper.applyToX(pathNodes.i[k][0],pathNodes.i[k][1],0),matrixHelper.applyToY(pathNodes.i[k][0],pathNodes.i[k][1],0),matrixHelper.applyToX(pathNodes.v[k][0],pathNodes.v[k][1],0),matrixHelper.applyToY(pathNodes.v[k][0],pathNodes.v[k][1],0));
-            }
-            pathArr.push(matrixHelper.applyToX(pathNodes.o[k-1][0],pathNodes.o[k-1][1],0),matrixHelper.applyToY(pathNodes.o[k-1][0],pathNodes.o[k-1][1],0),matrixHelper.applyToX(pathNodes.i[0][0],pathNodes.i[0][1],0),matrixHelper.applyToY(pathNodes.i[0][0],pathNodes.i[0][1],0),matrixHelper.applyToX(pathNodes.v[0][0],pathNodes.v[0][1],0),matrixHelper.applyToY(pathNodes.v[0][0],pathNodes.v[0][1],0));
-            commands[j] = pathArr;
-        }
-        if(singleShape){
-            xPos += letters[i].l;
-            xPos += trackingOffset;
-        }
-        if(this.textSpans[cnt]){
-            this.textSpans[cnt].elem = commands;
-        } else {
-            this.textSpans[cnt] = {elem: commands};
-        }
-        cnt +=1;
-    }
+    this.textPaint = new CK.SkPaint();
+    ColorUtil.parseArray(documentData.fc);
+    
+}
+extendPrototype([BaseElement, TransformElement, SkiaBaseElement, HierarchyElement, FrameElement, RenderableElement, ITextElement], SkiaTextElement);
+
+SkiaTextElement.prototype.buildNewText = function () {
+
+    return;
 };
 
-SkiaTextElement.prototype.renderInnerContent = function(){
-    var ctx = this.canvasContext;
-    var finalMat = this.finalTransform.mat.props;
-    ctx.font = this.values.fValue;
-    ctx.lineCap = 'butt';
-    ctx.lineJoin = 'miter';
-    ctx.miterLimit = 4;
+SkiaTextElement.prototype.renderInnerContent = function () {
 
-    if(!this.data.singleShape){
-        this.textAnimator.getMeasures(this.textProperty.currentData, this.lettersChangedFlag);
-    }
+    var documentData = this.textProperty.currentData;
 
-    var  i,len, j, jLen, k, kLen;
-    var renderedLetters = this.textAnimator.renderedLetters;
+    this.skcanvas.drawText(documentData.t, 0, 0, this.textPaint, this.textFont);
 
-    var letters = this.textProperty.currentData.l;
+    return;
+};
 
-    len = letters.length;
-    var renderedLetter;
-    var lastFill = null, lastStroke = null, lastStrokeW = null, commands, pathArr;
-    for(i=0;i<len;i+=1){
-        if(letters[i].n){
-            continue;
-        }
-        renderedLetter = renderedLetters[i];
-        if(renderedLetter){
-            this.globalData.renderer.save();
-            this.globalData.renderer.ctxTransform(renderedLetter.p);
-            this.globalData.renderer.ctxOpacity(renderedLetter.o);
-        }
-        if(this.fill){
-            if(renderedLetter && renderedLetter.fc){
-                if(lastFill !== renderedLetter.fc){
-                    lastFill = renderedLetter.fc;
-                    ctx.fillStyle = renderedLetter.fc;
-                }
-            }else if(lastFill !== this.values.fill){
-                lastFill = this.values.fill;
-                ctx.fillStyle = this.values.fill;
-            }
-            commands = this.textSpans[i].elem;
-            jLen = commands.length;
-            this.globalData.canvasContext.beginPath();
-            for(j=0;j<jLen;j+=1) {
-                pathArr = commands[j];
-                kLen = pathArr.length;
-                this.globalData.canvasContext.moveTo(pathArr[0], pathArr[1]);
-                for (k = 2; k < kLen; k += 6) {
-                    this.globalData.canvasContext.bezierCurveTo(pathArr[k], pathArr[k + 1], pathArr[k + 2], pathArr[k + 3], pathArr[k + 4], pathArr[k + 5]);
-                }
-            }
-            this.globalData.canvasContext.closePath();
-            this.globalData.canvasContext.fill();
-            ///ctx.fillText(this.textSpans[i].val,0,0);
-        }
-        if(this.stroke){
-            if(renderedLetter && renderedLetter.sw){
-                if(lastStrokeW !== renderedLetter.sw){
-                    lastStrokeW = renderedLetter.sw;
-                    ctx.lineWidth = renderedLetter.sw;
-                }
-            }else if(lastStrokeW !== this.values.sWidth){
-                lastStrokeW = this.values.sWidth;
-                ctx.lineWidth = this.values.sWidth;
-            }
-            if(renderedLetter && renderedLetter.sc){
-                if(lastStroke !== renderedLetter.sc){
-                    lastStroke = renderedLetter.sc;
-                    ctx.strokeStyle = renderedLetter.sc;
-                }
-            }else if(lastStroke !== this.values.stroke){
-                lastStroke = this.values.stroke;
-                ctx.strokeStyle = this.values.stroke;
-            }
-            commands = this.textSpans[i].elem;
-            jLen = commands.length;
-            this.globalData.canvasContext.beginPath();
-            for(j=0;j<jLen;j+=1) {
-                pathArr = commands[j];
-                kLen = pathArr.length;
-                this.globalData.canvasContext.moveTo(pathArr[0], pathArr[1]);
-                for (k = 2; k < kLen; k += 6) {
-                    this.globalData.canvasContext.bezierCurveTo(pathArr[k], pathArr[k + 1], pathArr[k + 2], pathArr[k + 3], pathArr[k + 4], pathArr[k + 5]);
-                }
-            }
-            this.globalData.canvasContext.closePath();
-            this.globalData.canvasContext.stroke();
-            ///ctx.strokeText(letters[i].val,0,0);
-        }
-        if(renderedLetter) {
-            this.globalData.renderer.restore();
-        }
-    }
+SkiaTextElement.prototype.destroy = function () {
+    this.textPaint.delete();
+    this.textFont.delete();
 };
 function SkiaEffects() {
 
@@ -14300,6 +14189,7 @@ var AnimationItem = function () {
     this.playCount = 0;
     this.animationData = {};
     this.assets = [];
+    this.fonts = [];
     this.isPaused = true;
     this.autoplay = false;
     this.loop = true;
@@ -14520,7 +14410,12 @@ AnimationItem.prototype.configAnimation = function (animData) {
             animData.assets = [];
         }
 
+        if (!animData.fonts) {
+            animData.fonts = {};
+        }
+
         this.assets = this.animationData.assets;
+        this.fonts = this.animationData.fonts.list;
         this.frameRate = this.animationData.fr;
         this.frameMult = this.animationData.fr / 1000;
         this.renderer.searchExtraCompositions(animData.assets);
@@ -14847,6 +14742,19 @@ AnimationItem.prototype.getAssetData = function (id) {
     while (i < len) {
         if (id == this.assets[i].id) {
             return this.assets[i];
+        }
+        i += 1;
+    }
+};
+
+/**
+ * 根据fName，获取字体
+ */
+AnimationItem.prototype.getFontData = function (fName) {
+    var i = 0, len = this.fonts.length;
+    while (i < len) {
+        if (fName == this.fonts[i].fName) {
+            return this.fonts[i];
         }
         i += 1;
     }

@@ -1,13 +1,13 @@
-function SkiaFill(canvasKit) {
-    SkiaBaseContent.call(this, canvasKit);
+function SkiaFill() {
+    SkiaBaseContent.call(this);
 
     /**
- * 创建填充
- */
+     * 创建填充
+    */
     this.setFillStyle = function (fillStyle) {
         this.paint.setStyle(SKIA.CanvasKit().PaintStyle.Fill);
         if (typeof fillStyle === 'string') {
-            var fs = ColorUtil.parseColor( fillStyle);
+            var fs = ColorUtil.parseColor(fillStyle);
             var alphaColor = SKIA.CanvasKit().multiplyByAlpha(fs, this.alpha);
             this.paint.setColor(alphaColor);
         } else if (fillStyle._getShader) {
@@ -25,7 +25,7 @@ function SkiaFill(canvasKit) {
         }
     }
 
-    
+
     /**
      * 填充操作
      */

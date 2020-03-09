@@ -1,4 +1,4 @@
-function SkiaCanvasRenderer(animationItem, canvasKit, config) {
+function SkiaCanvasRenderer(animationItem, config) {
     this.animationItem = animationItem;
     this.renderConfig = {
         clearCanvas: (config && config.clearCanvas !== undefined) ? config.clearCanvas : true,
@@ -236,7 +236,6 @@ SkiaCanvasRenderer.prototype.configAnimation = function (animData) {
         ty: 0
     };
     this.setupGlobalData(animData, document.body);
-    this.globalData.canvasKit = SKIA.CanvasKit();
     this.globalData.skcanvas = this.skcanvas;
     this.globalData.renderer = this;
     this.globalData.isDashed = false;
@@ -328,7 +327,6 @@ SkiaCanvasRenderer.prototype.destroy = function () {
         }
     }
     this.elements.length = 0;
-    this.globalData.canvasKit = null;
     this.globalData.skcanvas = null;
     this.animationItem.container = null;
     this.destroyed = true;

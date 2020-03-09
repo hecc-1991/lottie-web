@@ -14,6 +14,7 @@ var AnimationItem = function () {
     this.playCount = 0;
     this.animationData = {};
     this.assets = [];
+    this.fonts = [];
     this.isPaused = true;
     this.autoplay = false;
     this.loop = true;
@@ -234,7 +235,12 @@ AnimationItem.prototype.configAnimation = function (animData) {
             animData.assets = [];
         }
 
+        if (!animData.fonts) {
+            animData.fonts = {};
+        }
+
         this.assets = this.animationData.assets;
+        this.fonts = this.animationData.fonts.list;
         this.frameRate = this.animationData.fr;
         this.frameMult = this.animationData.fr / 1000;
         this.renderer.searchExtraCompositions(animData.assets);
@@ -561,6 +567,19 @@ AnimationItem.prototype.getAssetData = function (id) {
     while (i < len) {
         if (id == this.assets[i].id) {
             return this.assets[i];
+        }
+        i += 1;
+    }
+};
+
+/**
+ * 根据fName，获取字体
+ */
+AnimationItem.prototype.getFontData = function (fName) {
+    var i = 0, len = this.fonts.length;
+    while (i < len) {
+        if (fName == this.fonts[i].fName) {
+            return this.fonts[i];
         }
         i += 1;
     }

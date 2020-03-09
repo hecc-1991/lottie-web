@@ -1,9 +1,10 @@
-function SkiaStroke(canvasKit) {
-    SkiaBaseContent.call(this, canvasKit);
+function SkiaStroke() {
+
+    SkiaBaseContent.call(this);
 
     /**
- * 设置画笔风格
- */
+    * 设置画笔风格
+    */
     this.setStrokeStyle = function (strokeStyle) {
         this.paint.setStyle(SKIA.CanvasKit().PaintStyle.Stroke);
         if (typeof strokeStyle === 'string') {

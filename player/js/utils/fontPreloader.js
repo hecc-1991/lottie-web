@@ -30,7 +30,7 @@ var FontPreloader = (function () {
             .then(buffer => {
                 const fontMgr = SKIA.CanvasKit().SkFontMgr.RefDefault();
                 ob.font = fontMgr.MakeTypefaceFromData(buffer);
-                _toCleanUp.push(ob.font);
+                this._toCleanUp.push(ob.font);
                 this._fontLoaded();
             });
 
@@ -54,6 +54,16 @@ var FontPreloader = (function () {
         }
     }
 
+    function getFont(fontData) {
+        var i = 0, len = this.fonts.length;
+        while (i < len) {
+            if (this.fonts[i].fontData === fontData) {
+                return this.fonts[i].font;
+            }
+            i += 1;
+        }
+    }
+
     function destroy() {
         this.fontsLoadedCb = null;
         this.fonts.length = 0;
@@ -70,8 +80,9 @@ var FontPreloader = (function () {
         this.loadAssetsBinary = loadAssetsBinary;
         this._createFontBinaryData = createFontBinaryData;
         this.loaded = loaded;
-        this._fontLoaded = fontLoaded;
         this.destroy = destroy;
+        this.getFont = getFont;
+        this._fontLoaded = fontLoaded;
         this.fontsPath = '';
         this.path = '';
         this.totalFonts = 0;
