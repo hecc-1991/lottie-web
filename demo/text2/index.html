@@ -152,7 +152,6 @@
             };
             document.getElementById('shape2').addEventListener('pointermove', interact);
             document.getElementById('shape2').addEventListener('pointerdown', interact);
-            preventScrolling(document.getElementById('shape2'));
         }
 
 
@@ -202,6 +201,14 @@
 
         };
         var anim = bodymovin.loadAnimation3(animData); */
+
+
+        var text = 'hello world!\r你好，世界！';
+        var textLines = text.split(/[\r\n]/);
+        
+        console.log(textLines);
+        
+
     </script>
 </body>
 

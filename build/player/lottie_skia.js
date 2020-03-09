@@ -940,7 +940,7 @@ var ColorUtil = (function () {
             return SKIA.CanvasKit().BLACK;
         }
 
-        return SKIA.CanvasKit().Color(colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, 1);
+        return SKIA.CanvasKit().Color(colorArray[0]*255, colorArray[1]*255, colorArray[2]*255, 1);
 
     }
 
@@ -13150,8 +13150,7 @@ function SkiaTextElement(data, globalData, comp) {
     this.textFont.setSize(documentData.s);
 
     this.textPaint = new CK.SkPaint();
-    ColorUtil.parseArray(documentData.fc);
-    
+    this.textPaint.setColor(ColorUtil.parseArray(documentData.fc));
 }
 extendPrototype([BaseElement, TransformElement, SkiaBaseElement, HierarchyElement, FrameElement, RenderableElement, ITextElement], SkiaTextElement);
 
@@ -13164,7 +13163,12 @@ SkiaTextElement.prototype.renderInnerContent = function () {
 
     var documentData = this.textProperty.currentData;
 
-    this.skcanvas.drawText(documentData.t, 0, 0, this.textPaint, this.textFont);
+    var text = documentData.t;
+    var textLines = text.split(/[\r\n]/);
+    const lineHight = documentData.lh;
+    for (let i = 0; i < textLines.length; i++) {
+        this.skcanvas.drawText(textLines[i], 0, i*lineHight, this.textPaint, this.textFont);
+    }
 
     return;
 };
