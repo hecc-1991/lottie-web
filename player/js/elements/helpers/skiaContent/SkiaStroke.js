@@ -8,7 +8,7 @@ function SkiaStroke() {
     this.setStrokeStyle = function (strokeStyle) {
         this.paint.setStyle(SKIA.CanvasKit().PaintStyle.Stroke);
         if (typeof strokeStyle === 'string') {
-            var ss = ColorUtil.parseColor(fillStyle);
+            var ss = ColorUtil.parseColor(strokeStyle);
             var alphaColor = SKIA.CanvasKit().multiplyByAlpha(ss, this.alpha);
             this.paint.setColor(alphaColor);
         } else if (strokeStyle._getShader) {
@@ -23,6 +23,19 @@ function SkiaStroke() {
             this.delete();
         }
     }
+
+
+    /**
+     * 设置画笔宽
+     */
+    this.setStrokeWidth = function (width) {
+        if (width <= 0 || !width) {
+            // Spec says to ignore NaN/Inf/0/negative values
+            return;
+        }
+        this.paint.setStrokeWidth(width);
+    }
+
 
     /**
      * 设置画笔末端样式
@@ -97,7 +110,7 @@ function SkiaStroke() {
     /**
      * 画笔操作
      */
-    this.draw = function (skcanvas,path) {
+    this.draw = function (skcanvas, path) {
 
         var shadowPaint = this._shadowPaint(this.paint);
         if (shadowPaint) {

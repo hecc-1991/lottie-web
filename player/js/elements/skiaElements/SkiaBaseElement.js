@@ -20,7 +20,7 @@ SkiaBaseElement.prototype = {
         }
     },
     createRenderableComponents: function(){
-        this.maskManager = new SkiaMaskElement(this.data, this);
+        this.maskManager = new SkiaMaskElement(this.data, this,this.skcanvas);
     },
     hideElement: function(){
         if (!this.hidden && (!this.isInRange || this.isTransparent)) {

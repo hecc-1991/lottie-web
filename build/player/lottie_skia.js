@@ -525,7 +525,7 @@ function SkiaStroke() {
     this.setStrokeStyle = function (strokeStyle) {
         this.paint.setStyle(SKIA.CanvasKit().PaintStyle.Stroke);
         if (typeof strokeStyle === 'string') {
-            var ss = ColorUtil.parseColor(fillStyle);
+            var ss = ColorUtil.parseColor(strokeStyle);
             var alphaColor = SKIA.CanvasKit().multiplyByAlpha(ss, this.alpha);
             this.paint.setColor(alphaColor);
         } else if (strokeStyle._getShader) {
@@ -540,6 +540,19 @@ function SkiaStroke() {
             this.delete();
         }
     }
+
+
+    /**
+     * 设置画笔宽
+     */
+    this.setStrokeWidth = function (width) {
+        if (width <= 0 || !width) {
+            // Spec says to ignore NaN/Inf/0/negative values
+            return;
+        }
+        this.paint.setStrokeWidth(width);
+    }
+
 
     /**
      * 设置画笔末端样式
@@ -614,7 +627,7 @@ function SkiaStroke() {
     /**
      * 画笔操作
      */
-    this.draw = function (skcanvas,path) {
+    this.draw = function (skcanvas, path) {
 
         var shadowPaint = this._shadowPaint(this.paint);
         if (shadowPaint) {
@@ -12425,7 +12438,7 @@ SkiaBaseElement.prototype = {
         }
     },
     createRenderableComponents: function(){
-        this.maskManager = new SkiaMaskElement(this.data, this);
+        this.maskManager = new SkiaMaskElement(this.data, this,this.skcanvas);
     },
     hideElement: function(){
         if (!this.hidden && (!this.isInRange || this.isTransparent)) {
@@ -12559,9 +12572,10 @@ SkiaCompElement.prototype.destroy = function(){
     this.elements = null;
 };
 
-function SkiaMaskElement(data,element){
+function SkiaMaskElement(data,element,skcanvas){
     this.data = data;
     this.element = element;
+    this.skcanvas = skcanvas;
     this.masksProperties = this.data.masksProperties || [];
     this.viewData = createSizedArray(this.masksProperties.length);
     var i, len = this.masksProperties.length, hasMasks = false;
@@ -12920,7 +12934,7 @@ SkiaShapeElement.prototype.drawLayer = function () {
                 }
             }
             if (type === 'st' || type === 'gs') {
-                this.stroke.draw();
+                this.stroke.draw(this.skcanvas,this.curPath);
                 if (currentStyle.da) {
                     this.stroke.setLineDash(dashResetter, 0);
                 }

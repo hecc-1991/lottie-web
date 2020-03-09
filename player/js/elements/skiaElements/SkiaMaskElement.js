@@ -1,7 +1,8 @@
 
-function SkiaMaskElement(data,element){
+function SkiaMaskElement(data,element,skcanvas){
     this.data = data;
     this.element = element;
+    this.skcanvas = skcanvas;
     this.masksProperties = this.data.masksProperties || [];
     this.viewData = createSizedArray(this.masksProperties.length);
     var i, len = this.masksProperties.length, hasMasks = false;

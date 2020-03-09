@@ -301,7 +301,7 @@ SkiaShapeElement.prototype.drawLayer = function () {
                 }
             }
             if (type === 'st' || type === 'gs') {
-                this.stroke.draw();
+                this.stroke.draw(this.skcanvas,this.curPath);
                 if (currentStyle.da) {
                     this.stroke.setLineDash(dashResetter, 0);
                 }
