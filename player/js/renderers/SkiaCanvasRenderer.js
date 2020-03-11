@@ -83,16 +83,35 @@ SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
 }
 
 /**
+ * 反转矩阵
+ */
+SkiaCanvasRenderer.prototype.invert = function(m) {
+    var det = m[0]*m[4]*m[8] + m[1]*m[5]*m[6] + m[2]*m[3]*m[7]
+            - m[2]*m[4]*m[6] - m[1]*m[3]*m[8] - m[0]*m[5]*m[7];
+    if (!det) {
+      return SKIA.CanvasKit().SkMatrix.identity();
+    }
+    return [
+      (m[4]*m[8] - m[5]*m[7])/det, (m[2]*m[7] - m[1]*m[8])/det, (m[1]*m[5] - m[2]*m[4])/det,
+      (m[5]*m[6] - m[3]*m[8])/det, (m[0]*m[8] - m[2]*m[6])/det, (m[2]*m[3] - m[0]*m[5])/det,
+      (m[3]*m[7] - m[4]*m[6])/det, (m[1]*m[6] - m[0]*m[7])/det, (m[0]*m[4] - m[1]*m[3])/det,
+    ];
+  };
+
+/**
  * 将当前转换重置为单位矩阵
  */
 SkiaCanvasRenderer.prototype.resetTransform = function () {
     let mat = this.skcanvas.getTotalMatrix();
-    mat = SKIA.CanvasKit().SkMatrix.invert(mat);
+    console.log(this.skcanvas.getTotalMatrix());
+    mat = this.invert(mat);
+    //(!mat) && (mat = SKIA.CanvasKit().SkMatrix.identity());
     this.skcanvas.concat(mat);
+    
 };
 
- /**
-  * 将当前转换重置为单位矩阵。然后运行 transform()。
+/**
+ * 将当前转换重置为单位矩阵。然后运行 transform()。
 a	c	e
 b	d	f
 0	0	1
@@ -102,7 +121,7 @@ c	垂直倾斜绘图。
 d	垂直缩放绘图。
 e	水平移动绘图。
 f	垂直移动绘图。
-  */
+ */
 SkiaCanvasRenderer.prototype.setTransform = function (a, b, c, d, e, f) {
     this.checkNumer(arguments) && (
         this.resetTransform(),
@@ -311,7 +330,7 @@ SkiaCanvasRenderer.prototype.updateContainerSize = function () {
 
     this.ctxTransform(this.transformCanvas.props);
 
-    this.skcanvas.clipRect(SKIA.CanvasKit().XYWHRect(0,0,this.transformCanvas.w,this.transformCanvas.h), SKIA.CanvasKit().ClipOp.Intersect, true);
+    this.skcanvas.clipRect(SKIA.CanvasKit().XYWHRect(0, 0, this.transformCanvas.w, this.transformCanvas.h), SKIA.CanvasKit().ClipOp.Intersect, true);
 
     this.renderFrame(this.renderedFrame, true);
 };
@@ -341,6 +360,7 @@ SkiaCanvasRenderer.prototype.clearRect = function (x, y, width, height) {
     paint.setStyle(SKIA.CanvasKit().PaintStyle.Fill);
     paint.setBlendMode(SKIA.CanvasKit().BlendMode.Clear);
     this.skcanvas.drawRect(SKIA.CanvasKit().XYWHRect(x, y, width, height), paint);
+    paint.delete();
 }
 
 SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {

@@ -1,7 +1,6 @@
 function SkiaSolidElement(data, globalData, comp) {
     this.initElement(data, globalData, comp);
 
-    // method 1
     var CK = SKIA.CanvasKit();
     this.paint = new CK.SkPaint();
 

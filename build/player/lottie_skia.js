@@ -8228,16 +8228,35 @@ SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
 }
 
 /**
+ * 反转矩阵
+ */
+SkiaCanvasRenderer.prototype.invert = function(m) {
+    var det = m[0]*m[4]*m[8] + m[1]*m[5]*m[6] + m[2]*m[3]*m[7]
+            - m[2]*m[4]*m[6] - m[1]*m[3]*m[8] - m[0]*m[5]*m[7];
+    if (!det) {
+      return SKIA.CanvasKit().SkMatrix.identity();
+    }
+    return [
+      (m[4]*m[8] - m[5]*m[7])/det, (m[2]*m[7] - m[1]*m[8])/det, (m[1]*m[5] - m[2]*m[4])/det,
+      (m[5]*m[6] - m[3]*m[8])/det, (m[0]*m[8] - m[2]*m[6])/det, (m[2]*m[3] - m[0]*m[5])/det,
+      (m[3]*m[7] - m[4]*m[6])/det, (m[1]*m[6] - m[0]*m[7])/det, (m[0]*m[4] - m[1]*m[3])/det,
+    ];
+  };
+
+/**
  * 将当前转换重置为单位矩阵
  */
 SkiaCanvasRenderer.prototype.resetTransform = function () {
     let mat = this.skcanvas.getTotalMatrix();
-    mat = SKIA.CanvasKit().SkMatrix.invert(mat);
+    mat = this.invert(mat);
+    //(!mat) && (mat = SKIA.CanvasKit().SkMatrix.identity());
+    console.log(this.skcanvas.getTotalMatrix());
     this.skcanvas.concat(mat);
+    
 };
 
- /**
-  * 将当前转换重置为单位矩阵。然后运行 transform()。
+/**
+ * 将当前转换重置为单位矩阵。然后运行 transform()。
 a	c	e
 b	d	f
 0	0	1
@@ -8247,7 +8266,7 @@ c	垂直倾斜绘图。
 d	垂直缩放绘图。
 e	水平移动绘图。
 f	垂直移动绘图。
-  */
+ */
 SkiaCanvasRenderer.prototype.setTransform = function (a, b, c, d, e, f) {
     this.checkNumer(arguments) && (
         this.resetTransform(),
@@ -8456,7 +8475,7 @@ SkiaCanvasRenderer.prototype.updateContainerSize = function () {
 
     this.ctxTransform(this.transformCanvas.props);
 
-    this.skcanvas.clipRect(SKIA.CanvasKit().XYWHRect(0,0,this.transformCanvas.w,this.transformCanvas.h), SKIA.CanvasKit().ClipOp.Intersect, true);
+    this.skcanvas.clipRect(SKIA.CanvasKit().XYWHRect(0, 0, this.transformCanvas.w, this.transformCanvas.h), SKIA.CanvasKit().ClipOp.Intersect, true);
 
     this.renderFrame(this.renderedFrame, true);
 };
@@ -8486,6 +8505,7 @@ SkiaCanvasRenderer.prototype.clearRect = function (x, y, width, height) {
     paint.setStyle(SKIA.CanvasKit().PaintStyle.Fill);
     paint.setBlendMode(SKIA.CanvasKit().BlendMode.Clear);
     this.skcanvas.drawRect(SKIA.CanvasKit().XYWHRect(x, y, width, height), paint);
+    paint.delete();
 }
 
 SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {
@@ -12540,19 +12560,21 @@ function SkiaCompElement(data, globalData, comp) {
     this.elements = createSizedArray(this.layers.length);
     this.initElement(data, globalData, comp);
     this.tm = data.tm ? PropertyFactory.getProp(this,data.tm,0,globalData.frameRate, this) : {_placeholder:true};
+
+    var CK = SKIA.CanvasKit();
+    this.path =new CK.SkPath();
 }
 
 extendPrototype([SkiaCanvasRenderer, ICompElement, SkiaBaseElement], SkiaCompElement);
 
 SkiaCompElement.prototype.renderInnerContent = function() {
-    var CK = SKIA.CanvasKit();
-    const path =new CK.SkPath();
-    path.moveTo(0,0);
-    path.lineTo(this.data.w,0);
-    path.lineTo(this.data.w, this.data.h);
-    path.lineTo(0, this.data.h);
-    path.lineTo(0,0);
-    this.skcanvas.clipPath(path,SKIA.CanvasKit().ClipOp.Intersect,true);
+    this.path.reset();
+    this.path.moveTo(0,0);
+    this.path.lineTo(this.data.w,0);
+    this.path.lineTo(this.data.w, this.data.h);
+    this.path.lineTo(0, this.data.h);
+    this.path.lineTo(0,0);
+    this.skcanvas.clipPath(this.path,SKIA.CanvasKit().ClipOp.Intersect,true);
     var i,len = this.layers.length;
     for( i = len - 1; i >= 0; i -= 1 ){
         if(this.completeLayers || this.elements[i]){
@@ -12570,6 +12592,8 @@ SkiaCompElement.prototype.destroy = function(){
     }
     this.layers = null;
     this.elements = null;
+    this.path.delete();
+
 };
 
 function SkiaMaskElement(data,element,skcanvas){
@@ -12589,46 +12613,48 @@ function SkiaMaskElement(data,element,skcanvas){
     if(hasMasks) {
         this.element.addRenderableComponent(this);
     }
+
+    var CK = SKIA.CanvasKit();
+    this.path = new CK.SkPath();
 }
 
 SkiaMaskElement.prototype.renderFrame = function () {
     if(!this.hasMasks){
         return;
     }
+    this.path.reset();
     var transform = this.element.finalTransform.mat;
     var i, len = this.masksProperties.length;
     var pt,pts,data;
-    var CK = SKIA.CanvasKit();
-    const path = new CK.SkPath();
     for (i = 0; i < len; i++) {
         if(this.masksProperties[i].mode !== 'n'){
             if (this.masksProperties[i].inv) {
-                path.moveTo(0, 0);
-                path.lineTo(this.element.globalData.compSize.w, 0);
-                path.lineTo(this.element.globalData.compSize.w, this.element.globalData.compSize.h);
-                path.lineTo(0, this.element.globalData.compSize.h);
-                path.lineTo(0, 0);
+                this.path.moveTo(0, 0);
+                this.path.lineTo(this.element.globalData.compSize.w, 0);
+                this.path.lineTo(this.element.globalData.compSize.w, this.element.globalData.compSize.h);
+                this.path.lineTo(0, this.element.globalData.compSize.h);
+                this.path.lineTo(0, 0);
             }
             data = this.viewData[i].v;
             pt = transform.applyToPointArray(data.v[0][0],data.v[0][1],0);
-            path.moveTo(pt[0], pt[1]);
+            this.path.moveTo(pt[0], pt[1]);
             var j, jLen = data._length;
             for (j = 1; j < jLen; j++) {
                 pts = transform.applyToTriplePoints(data.o[j - 1], data.i[j], data.v[j]);
-                path.cubicTo(pts[0], pts[1], pts[2], pts[3], pts[4], pts[5]);
+                this.path.cubicTo(pts[0], pts[1], pts[2], pts[3], pts[4], pts[5]);
             }
             pts = transform.applyToTriplePoints(data.o[j - 1], data.i[0], data.v[0]);
-            path.cubicTo(pts[0], pts[1], pts[2], pts[3], pts[4], pts[5]);
+            this.path.cubicTo(pts[0], pts[1], pts[2], pts[3], pts[4], pts[5]);
         }
     }
     this.element.globalData.renderer.save(true);
-    this.skcanvas.clipPath(path,SKIA.CanvasKit().ClipOp.Intersect,true);
-    path.delete();
+    this.skcanvas.clipPath(this.path,SKIA.CanvasKit().ClipOp.Intersect,true);
 };
 
 SkiaMaskElement.prototype.getMaskProperty = MaskElement.prototype.getMaskProperty;
 
 SkiaMaskElement.prototype.destroy = function(){
+    this.path.delete();
     this.element = null;
 };
 function SkiaShapeElement(data, globalData, comp) {
@@ -13112,7 +13138,6 @@ SkiaShapeElement.prototype.destroy = function () {
 function SkiaSolidElement(data, globalData, comp) {
     this.initElement(data, globalData, comp);
 
-    // method 1
     var CK = SKIA.CanvasKit();
     this.paint = new CK.SkPaint();
 
