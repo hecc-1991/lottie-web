@@ -1,5 +1,5 @@
 function HImageElement(data,globalData,comp){
-    this.assetData = globalData.getAssetData(data.refId);
+    this.assetData = globalData.getImageData(data.refId);
     this.initElement(data,globalData,comp);
 }
 

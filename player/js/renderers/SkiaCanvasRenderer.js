@@ -49,6 +49,10 @@ SkiaCanvasRenderer.prototype.createSolid = function (data) {
     return new SkiaSolidElement(data, this.globalData, this);
 };
 
+SkiaCanvasRenderer.prototype.createVideo = function (data) {
+    return new SkiaVideoElement(data, this.globalData, this);
+};
+
 SkiaCanvasRenderer.prototype.createNull = SVGRenderer.prototype.createNull;
 
 
@@ -103,7 +107,6 @@ SkiaCanvasRenderer.prototype.invert = function(m) {
  */
 SkiaCanvasRenderer.prototype.resetTransform = function () {
     let mat = this.skcanvas.getTotalMatrix();
-    console.log(this.skcanvas.getTotalMatrix());
     mat = this.invert(mat);
     //(!mat) && (mat = SKIA.CanvasKit().SkMatrix.identity());
     this.skcanvas.concat(mat);

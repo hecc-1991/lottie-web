@@ -1,5 +1,5 @@
 function IImageElement(data,globalData,comp){
-    this.assetData = globalData.getAssetData(data.refId);
+    this.assetData = globalData.getImageData(data.refId);
     this.initElement(data,globalData,comp);
     this.sourceRect = {top:0,left:0,width:this.assetData.w,height:this.assetData.h};
 }

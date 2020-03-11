@@ -5699,6 +5699,98 @@ var buildShapeString = function(pathNodes, length, closed, mat) {
         }
         return shapeString;
 }
+var AssetsHolder = (function () {
+
+    // 资源类型
+    const AssetType = {
+        COMPOSITION: 0,
+        IMAGE: 1,
+        AUDIO: 2,
+        TEXT: 3,
+        VIDEO: 4
+    };
+
+
+    /**
+     * 解析资源
+     * @param {*} assets 
+     */
+    function parse(assets) {
+        let i, len = assets.length;
+        for (i = 0; i < len; i++) {
+            const element = assets[i];
+            switch (element.ty) {
+                case AssetType.COMPOSITION:
+                    // do nothing
+                    break;
+                case AssetType.IMAGE:
+                    this.imageHolder.push(element);
+                    break;
+                case AssetType.AUDIO:
+                    this.audioHolder.push(element);
+                    break;
+                case AssetType.TEXT:
+                    this.textHolder.push(element);
+                    break;
+                case AssetType.VIDEO:
+                    this.videoHolder.push(element);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    /**
+     * 获取图片资源
+     */
+    function imageAssets() {
+        return this.imageHolder;
+    }
+
+    /**
+     * 获取音频资源
+     */
+    function audioAssets() {
+        return this.audioHolder;
+    }
+
+    /**
+     * 获取文字资源
+     */
+    function textAssets() {
+        return this.textHolder;
+    }
+
+    /**
+    * 获取视频资源
+    */
+    function videoAssets() {
+        return this.videoHolder;
+    }
+
+    /**
+    * 销毁资源
+    */
+    function destroy() {
+        this.imageHolder.length = 0;
+        this.audioHolder.length = 0;
+        this.textHolder.length = 0;
+        this.videoHolder.length = 0;
+    }
+    return function AssetsHolder() {
+        this.parse = parse;
+        this.imageAssets = imageAssets;
+        this.audioAssets = audioAssets;
+        this.textAssets = textAssets;
+        this.videoAssets = videoAssets;
+        this.destroy = destroy;
+        this.imageHolder = [];
+        this.audioHolder = [];
+        this.textHolder = [];
+        this.videoHolder = [];
+    };
+}());
 var ImagePreloader = (function () {
 
     var proxyImage = (function () {
@@ -5849,8 +5941,215 @@ var ImagePreloader = (function () {
         this.images = [];
     };
 }());
+var VideoPreloader = (function () {
+
+    /**
+     * 视频加载完成，调用回调函数
+     */
+    function videoLoaded() {
+        this.loadedAssets += 1;
+        if (this.loadedAssets === this.totalVideos) {
+            if (this.videosLoadedCb) {
+                this.videosLoadedCb(null);
+            }
+        }
+    }
+
+    /**
+     * 获取视频文件路径
+     * @param {*} assetData 
+     */
+    function getAssetsPath(assetData) {
+        return assetData.u+assetData.p;
+    }
+
+    /**
+     * 创建图片二进制数据
+     * @param {{图片资源信息}} assetData 
+     */
+    function createVideoBinaryData(assetData) {
+        var path = getAssetsPath(assetData);
+
+        var ob = {
+            assetData: assetData
+        }
+
+        fetch(path).then(response => response.arrayBuffer())
+            .then(buffer => {
+                ob.video = buffer;
+                this._videoLoaded();
+            });
+
+        return ob;
+    }
+
+    /**
+     * 加载图片的二进制数据，即ByteArrry
+     * @param {图片资源信息数组} assets 
+     * @param {回调函数} cb 
+     */
+    function loadAssetsBinary(assets, cb) {
+        this.videosLoadedCb = cb;
+        var i, len = assets.length;
+        for (i = 0; i < len; i += 1) {
+            if (!assets[i].layers) {
+                this.totalVideos += 1;
+                this.videos.push(this._createVideoBinaryData(assets[i]));
+            }
+        }
+    }
+
+    /**
+     * 获取视频文件
+     * @param {*} assetData 
+     */
+    function getVideo(assetData) {
+        var i = 0, len = this.videos.length;
+        while (i < len) {
+            if (this.videos[i].assetData === assetData) {
+                return this.videos[i].video;
+            }
+            i += 1;
+        }
+    }
+
+    /**
+     * 销毁资源
+     */
+    function destroy() {
+        this.videosLoadedCb = null;
+        this.videos.length = 0;
+    }
+
+    /**
+     * 视频是否加载完成
+     * true：加载完成
+     * false：未加载完成
+     */
+    function loaded() {
+        return this.totalVideos === this.loadedAssets;
+    }
+
+    return function VideoPreloader() {
+        this.loadAssetsBinary = loadAssetsBinary;
+        this.loaded = loaded;
+        this.destroy = destroy;
+        this.getVideo = getVideo;
+        this._createVideoBinaryData = createVideoBinaryData;
+        this._videoLoaded = videoLoaded;
+        this.totalVideos = 0;
+        this.loadedAssets = 0;
+        this.videosLoadedCb = null;
+        this.videos = [];
+    };
+}());
+var AudioPreloader = (function () {
+
+    /**
+     * 音频加载完成，调用回调函数
+     */
+    function audioLoaded() {
+        this.loadedAssets += 1;
+        if (this.loadedAssets === this.totalAudios) {
+            if (this.audiosLoadedCb) {
+                this.audiosLoadedCb(null);
+            }
+        }
+    }
+
+    /**
+     * 获取音频文件路径
+     * @param {*} assetData 
+     */
+    function getAssetsPath(assetData) {
+        return assetData.u+assetData.p;
+    }
+
+    /**
+     * 创建图片二进制数据
+     * @param {{图片资源信息}} assetData 
+     */
+    function createAudioBinaryData(assetData) {
+        var path = getAssetsPath(assetData);
+
+        var ob = {
+            assetData: assetData
+        }
+
+        fetch(path).then(response => response.arrayBuffer())
+            .then(buffer => {
+                ob.audio = buffer;
+                this._audioLoaded();
+            });
+
+        return ob;
+    }
+
+    /**
+     * 加载图片的二进制数据，即ByteArrry
+     * @param {图片资源信息数组} assets 
+     * @param {回调函数} cb 
+     */
+    function loadAssetsBinary(assets, cb) {
+        this.audiosLoadedCb = cb;
+        var i, len = assets.length;
+        for (i = 0; i < len; i += 1) {
+            if (!assets[i].layers) {
+                this.totalAudios += 1;
+                this.audios.push(this._createAudioBinaryData(assets[i]));
+            }
+        }
+    }
+
+    /**
+     * 获取音频文件
+     * @param {*} assetData 
+     */
+    function getAudio(assetData) {
+        var i = 0, len = this.audios.length;
+        while (i < len) {
+            if (this.audios[i].assetData === assetData) {
+                return this.audios[i].audio;
+            }
+            i += 1;
+        }
+    }
+
+    /**
+     * 销毁资源
+     */
+    function destroy() {
+        this.audiosLoadedCb = null;
+        this.audios.length = 0;
+    }
+
+    /**
+     * 音频是否加载完成
+     * true：加载完成
+     * false：未加载完成
+     */
+    function loaded() {
+        return this.totalAudios === this.loadedAssets;
+    }
+
+    return function AudioPreloader() {
+        this.loadAssetsBinary = loadAssetsBinary;
+        this.loaded = loaded;
+        this.destroy = destroy;
+        this.getAudio = getAudio;
+        this._createAudioBinaryData = createAudioBinaryData;
+        this._audioLoaded = audioLoaded;
+        this.totalAudios = 0;
+        this.loadedAssets = 0;
+        this.audiosLoadedCb = null;
+        this.audios = [];
+    };
+}());
 var FontPreloader = (function () {
 
+    /**
+     * 字体加载完成，调用回调函数
+     */
     function fontLoaded() {
         this.loadedFonts += 1;
         if (this.loadedFonts === this.totalFonts) {
@@ -5860,9 +6159,12 @@ var FontPreloader = (function () {
         }
     }
 
-    function getFontsPath(fontData, fontsPath, original_path) {
-        var path = fontData.u+fontData.fName+'.ttf';
-        return path;
+    /**
+     * 获取字体文件路径
+     * @param {*} fontData 
+     */
+    function getFontsPath(fontData) {
+        return fontData.u + fontData.fName + '.ttf';
         //return fontData.fPath;
     }
 
@@ -5872,7 +6174,7 @@ var FontPreloader = (function () {
     * @param {{字体资源信息}} fontData 
     */
     function createFontBinaryData(fontData) {
-        var path = getFontsPath(fontData, this.fontsPath, this.path);
+        var path = getFontsPath(fontData);
 
         var ob = {
             fontData: fontData
@@ -5906,6 +6208,10 @@ var FontPreloader = (function () {
         }
     }
 
+    /**
+     * 获取字体文件
+     * @param {*} fontData 
+     */
     function getFont(fontData) {
         var i = 0, len = this.fonts.length;
         while (i < len) {
@@ -5916,6 +6222,9 @@ var FontPreloader = (function () {
         }
     }
 
+    /**
+     * 销毁字体资源，字体管理类
+     */
     function destroy() {
         this.fontsLoadedCb = null;
         this.fonts.length = 0;
@@ -5924,6 +6233,11 @@ var FontPreloader = (function () {
         });
     }
 
+    /**
+    * 字体是否加载完成
+    * true：加载完成
+    * false：未加载完成
+    */
     function loaded() {
         return this.totalFonts === this.loadedFonts;
     }
@@ -5935,8 +6249,6 @@ var FontPreloader = (function () {
         this.destroy = destroy;
         this.getFont = getFont;
         this._fontLoaded = fontLoaded;
-        this.fontsPath = '';
-        this.path = '';
         this.totalFonts = 0;
         this.loadedFonts = 0;
         this.fontsLoadedCb = null;
@@ -7425,63 +7737,65 @@ var bezier_length_pool = (function(){
 	}
 	return pool_factory(8, create);
 }());
-function BaseRenderer(){}
-BaseRenderer.prototype.checkLayers = function(num){
+function BaseRenderer() { }
+BaseRenderer.prototype.checkLayers = function (num) {
     var i, len = this.layers.length, data;
     this.completeLayers = true;
     for (i = len - 1; i >= 0; i--) {
         if (!this.elements[i]) {
             data = this.layers[i];
-            if(data.ip - data.st <= (num - this.layers[i].st) && data.op - data.st > (num - this.layers[i].st))
-            {
+            if (data.ip - data.st <= (num - this.layers[i].st) && data.op - data.st > (num - this.layers[i].st)) {
                 this.buildItem(i);
             }
         }
-        this.completeLayers = this.elements[i] ? this.completeLayers:false;
+        this.completeLayers = this.elements[i] ? this.completeLayers : false;
     }
     this.checkPendingElements();
 };
 
-BaseRenderer.prototype.createItem = function(layer){
-    switch(layer.ty){
-        case 2:
-            return this.createImage(layer);
+BaseRenderer.prototype.createItem = function (layer) {
+    switch (layer.ty) {
+
         case 0:
             return this.createComp(layer);
         case 1:
             return this.createSolid(layer);
+        case 2:
+            return this.createImage(layer);
         case 3:
             return this.createNull(layer);
         case 4:
             return this.createShape(layer);
         case 5:
             return this.createText(layer);
+        case 9:
+            return this.createVideo(layer);
         case 13:
             return this.createCamera(layer);
     }
     return this.createNull(layer);
 };
 
-BaseRenderer.prototype.createCamera = function(){
+BaseRenderer.prototype.createCamera = function () {
     throw new Error('You\'re using a 3d camera. Try the html renderer.');
 };
 
-BaseRenderer.prototype.buildAllItems = function(){
+BaseRenderer.prototype.buildAllItems = function () {
     var i, len = this.layers.length;
-    for(i=0;i<len;i+=1){
+    for (i = 0; i < len; i += 1) {
         this.buildItem(i);
     }
     this.checkPendingElements();
 };
 
-BaseRenderer.prototype.includeLayers = function(newLayers){
+BaseRenderer.prototype.includeLayers = function (newLayers) {
     this.completeLayers = false;
     var i, len = newLayers.length;
     var j, jLen = this.layers.length;
-    for(i=0;i<len;i+=1){
+    for (i = 0; i < len; i += 1) {
         j = 0;
-        while(j<jLen){
-            if(this.layers[j].id == newLayers[i].id){
+        while (j < jLen) {
+            if (this.layers[j].id == newLayers[i].id) {
                 this.layers[j] = newLayers[i];
                 break;
             }
@@ -7490,19 +7804,19 @@ BaseRenderer.prototype.includeLayers = function(newLayers){
     }
 };
 
-BaseRenderer.prototype.setProjectInterface = function(pInterface){
+BaseRenderer.prototype.setProjectInterface = function (pInterface) {
     this.globalData.projectInterface = pInterface;
 };
 
-BaseRenderer.prototype.initItems = function(){
-    if(!this.globalData.progressiveLoad){
+BaseRenderer.prototype.initItems = function () {
+    if (!this.globalData.progressiveLoad) {
         this.buildAllItems();
     }
 };
-BaseRenderer.prototype.buildElementParenting = function(element, parentName, hierarchy) {
+BaseRenderer.prototype.buildElementParenting = function (element, parentName, hierarchy) {
     var elements = this.elements;
     var layers = this.layers;
-    var i=0, len = layers.length;
+    var i = 0, len = layers.length;
     while (i < len) {
         if (layers[i].ind == parentName) {
             if (!elements[i] || elements[i] === true) {
@@ -7511,7 +7825,7 @@ BaseRenderer.prototype.buildElementParenting = function(element, parentName, hie
             } else {
                 hierarchy.push(elements[i]);
                 elements[i].setAsParent();
-                if(layers[i].parent !== undefined) {
+                if (layers[i].parent !== undefined) {
                     this.buildElementParenting(element, layers[i].parent, hierarchy);
                 } else {
                     element.setHierarchy(hierarchy);
@@ -7522,14 +7836,14 @@ BaseRenderer.prototype.buildElementParenting = function(element, parentName, hie
     }
 };
 
-BaseRenderer.prototype.addPendingElement = function(element){
+BaseRenderer.prototype.addPendingElement = function (element) {
     this.pendingElements.push(element);
 };
 
-BaseRenderer.prototype.searchExtraCompositions = function(assets){
+BaseRenderer.prototype.searchExtraCompositions = function (assets) {
     var i, len = assets.length;
-    for(i=0;i<len;i+=1){
-        if(assets[i].xt){
+    for (i = 0; i < len; i += 1) {
+        if (assets[i].xt) {
             var comp = this.createComp(assets[i]);
             comp.initExpressions();
             this.globalData.projectInterface.registerComposition(comp);
@@ -7537,14 +7851,16 @@ BaseRenderer.prototype.searchExtraCompositions = function(assets){
     }
 };
 
-BaseRenderer.prototype.setupGlobalData = function(animData, fontsContainer) {
+BaseRenderer.prototype.setupGlobalData = function (animData, fontsContainer) {
     this.globalData.fontManager = new FontManager();
     this.globalData.fontManager.addChars(animData.chars);
     this.globalData.fontManager.addFonts(animData.fonts, fontsContainer);
     this.globalData.getAssetData = this.animationItem.getAssetData.bind(this.animationItem);
     this.globalData.getFontData = this.animationItem.getFontData.bind(this.animationItem);
+    this.globalData.getVideoData = this.animationItem.getVideoData.bind(this.animationItem);
     this.globalData.getAssetsPath = this.animationItem.getAssetsPath.bind(this.animationItem);
     this.globalData.imageLoader = this.animationItem.imagePreloader;
+    this.globalData.videoLoader = this.animationItem.videoPreloader;
     this.globalData.fontLoader = this.animationItem.fontPreloader;
     this.globalData.frameId = 0;
     this.globalData.frameRate = animData.fr;
@@ -8194,6 +8510,10 @@ SkiaCanvasRenderer.prototype.createSolid = function (data) {
     return new SkiaSolidElement(data, this.globalData, this);
 };
 
+SkiaCanvasRenderer.prototype.createVideo = function (data) {
+    return new SkiaVideoElement(data, this.globalData, this);
+};
+
 SkiaCanvasRenderer.prototype.createNull = SVGRenderer.prototype.createNull;
 
 
@@ -8250,7 +8570,6 @@ SkiaCanvasRenderer.prototype.resetTransform = function () {
     let mat = this.skcanvas.getTotalMatrix();
     mat = this.invert(mat);
     //(!mat) && (mat = SKIA.CanvasKit().SkMatrix.identity());
-    console.log(this.skcanvas.getTotalMatrix());
     this.skcanvas.concat(mat);
     
 };
@@ -13217,6 +13536,28 @@ SkiaTextElement.prototype.destroy = function () {
     this.textPaint.delete();
     this.textFont.delete();
 };
+function SkiaVideoElement(data,globalData,comp) {
+    this.videoData = globalData.getVideoData(data.refId);
+    this.video = globalData.videoLoader.getVideo(this.videoData);
+    this.initElement(data,globalData,comp);
+}
+
+extendPrototype([BaseElement, TransformElement, SkiaBaseElement, HierarchyElement, FrameElement, RenderableElement],SkiaVideoElement);
+
+SkiaVideoElement.prototype.initElement = SVGShapeElement.prototype.initElement;
+SkiaVideoElement.prototype.prepareFrame = IImageElement.prototype.prepareFrame;
+
+SkiaVideoElement.prototype.createContent = function () {
+    
+}
+
+SkiaVideoElement.prototype.renderInnerContent = function (parentMatrix) {
+    
+}
+
+SkiaVideoElement.prototype.destroy = function () {
+    
+}
 function SkiaEffects() {
 
 }
@@ -14248,7 +14589,9 @@ var AnimationItem = function () {
     this._completedLoop = false;
     this.projectInterface = ProjectInterface();
     this.imagePreloader = new ImagePreloader();
+    this.videoPreloader = new VideoPreloader();
     this.fontPreloader = new FontPreloader();
+    this.assetsHolder = new AssetsHolder();
 };
 
 extendPrototype([BaseEvent], AnimationItem);
@@ -14403,20 +14746,46 @@ AnimationItem.prototype.loadSegments = function () {
     this.loadNextSegment();
 };
 
+/**
+ * 图片加载完成的回调
+ */
 AnimationItem.prototype.imagesLoaded = function () {
     this.trigger('loaded_images');
     this.checkLoaded()
 }
 
+
+/**
+ * 预加载图片
+ */
 AnimationItem.prototype.preloadImages = function () {
     this.imagePreloader.setAssetsPath(this.assetsPath);
     this.imagePreloader.setPath(this.path);
     if (this.renderer.rendererType == 'skia') {
-        this.imagePreloader.loadAssetsBinary(this.animationData.assets, this.imagesLoaded.bind(this));
+        this.imagePreloader.loadAssetsBinary(this.assetsHolder.imageAssets(), this.imagesLoaded.bind(this));
     } else {
-        this.imagePreloader.loadAssets(this.animationData.assets, this.imagesLoaded.bind(this));
+        this.imagePreloader.loadAssets(this.assetsHolder.imageAssets(), this.imagesLoaded.bind(this));
     }
 }
+
+
+/**
+ * 视频加载完成的回调
+ */
+AnimationItem.prototype.videosLoaded = function () {
+    this.trigger('loaded_videos');
+    this.checkLoaded()
+}
+
+/**
+ * 预加载视频
+ */
+AnimationItem.prototype.preloadVideos = function () {
+    if (this.renderer.rendererType == 'skia') {
+        this.videoPreloader.loadAssetsBinary(this.assetsHolder.videoAssets(), this.videosLoaded.bind(this));
+    }
+}
+
 
 /**
  * 字体加载完成的回调
@@ -14427,7 +14796,7 @@ AnimationItem.prototype.fontsLoaded = function () {
 }
 
 /**
- * 加载字体
+ *  预加加载字体
  */
 AnimationItem.prototype.preloadFonts = function () {
     if (this.renderer.rendererType == 'skia') {
@@ -14435,6 +14804,9 @@ AnimationItem.prototype.preloadFonts = function () {
     }
 }
 
+/**
+ * 解析json文件，初始化资源，图层
+ */
 AnimationItem.prototype.configAnimation = function (animData) {
     if (!this.renderer) {
         return;
@@ -14459,12 +14831,14 @@ AnimationItem.prototype.configAnimation = function (animData) {
         }
 
         this.assets = this.animationData.assets;
+        this.assetsHolder.parse(this.assets);
         this.fonts = this.animationData.fonts.list;
         this.frameRate = this.animationData.fr;
         this.frameMult = this.animationData.fr / 1000;
         this.renderer.searchExtraCompositions(animData.assets);
         this.trigger('config_ready');
         this.preloadImages();
+        this.preloadVideos();
         this.preloadFonts();
         this.loadSegments();
         this.updaFrameModifier();
@@ -14492,6 +14866,7 @@ AnimationItem.prototype.checkLoaded = function () {
     if (!this.isLoaded &&
         (b_skia || this.renderer.globalData.fontManager.loaded()) &&
         (this.fontPreloader.loaded() || !b_skia) &&
+        (this.videoPreloader.loaded() || !b_skia) &&
         (this.imagePreloader.loaded() || (!b_canvas && !b_skia))) {
         this.isLoaded = true;
         dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
@@ -14733,7 +15108,10 @@ AnimationItem.prototype.destroy = function (name) {
         return;
     }
     this.renderer.destroy();
+    this.assetsHolder.destroy();
     this.imagePreloader.destroy();
+    this.videoPreloader.destroy();
+    this.fontPreloader.destroy();
     this.trigger('destroy');
     this._cbs = null;
     this.onEnterFrame = this.onLoopComplete = this.onComplete = this.onSegmentStart = this.onDestroy = null;
@@ -14781,11 +15159,30 @@ AnimationItem.prototype.getAssetsPath = function (assetData) {
     return path;
 };
 
+/**
+ * 根据id，获取图片资源
+ */
 AnimationItem.prototype.getAssetData = function (id) {
-    var i = 0, len = this.assets.length;
+    let is = this.assetsHolder.imageAssets();
+    var i = 0, len = is.length;
     while (i < len) {
-        if (id == this.assets[i].id) {
-            return this.assets[i];
+        if (id == is[i].id) {
+            return is[i];
+        }
+        i += 1;
+    }
+};
+
+
+/**
+ * 根据id，获取视频资源
+ */
+AnimationItem.prototype.getVideoData = function (id) {
+    let vs = this.assetsHolder.videoAssets();
+    var i = 0, len = vs.length;
+    while (i < len) {
+        if (id == vs[i].id) {
+            return vs[i];
         }
         i += 1;
     }
@@ -14856,7 +15253,7 @@ AnimationItem.prototype.trigger = function (name) {
 };
 
 AnimationItem.prototype.onError = function (error) {
-    console.log(error);
+    console.log(error.nativeError);
 }
 
 AnimationItem.prototype.triggerRenderFrameError = function (nativeError) {

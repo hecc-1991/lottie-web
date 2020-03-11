@@ -13,7 +13,6 @@ var AnimationItem = function () {
     this.playDirection = 1;
     this.playCount = 0;
     this.animationData = {};
-    this.assets = [];
     this.fonts = [];
     this.isPaused = true;
     this.autoplay = false;
@@ -29,7 +28,10 @@ var AnimationItem = function () {
     this._completedLoop = false;
     this.projectInterface = ProjectInterface();
     this.imagePreloader = new ImagePreloader();
+    this.videoPreloader = new VideoPreloader();
+    this.audioPreloader = new AudioPreloader();
     this.fontPreloader = new FontPreloader();
+    this.assetsHolder = new AssetsHolder();
 };
 
 extendPrototype([BaseEvent], AnimationItem);
@@ -184,20 +186,63 @@ AnimationItem.prototype.loadSegments = function () {
     this.loadNextSegment();
 };
 
+/**
+ * 图片加载完成的回调
+ */
 AnimationItem.prototype.imagesLoaded = function () {
     this.trigger('loaded_images');
     this.checkLoaded()
 }
 
+
+/**
+ * 预加载图片
+ */
 AnimationItem.prototype.preloadImages = function () {
     this.imagePreloader.setAssetsPath(this.assetsPath);
     this.imagePreloader.setPath(this.path);
     if (this.renderer.rendererType == 'skia') {
-        this.imagePreloader.loadAssetsBinary(this.animationData.assets, this.imagesLoaded.bind(this));
+        this.imagePreloader.loadAssetsBinary(this.assetsHolder.imageAssets(), this.imagesLoaded.bind(this));
     } else {
-        this.imagePreloader.loadAssets(this.animationData.assets, this.imagesLoaded.bind(this));
+        this.imagePreloader.loadAssets(this.assetsHolder.imageAssets(), this.imagesLoaded.bind(this));
     }
 }
+
+
+/**
+ * 视频加载完成的回调
+ */
+AnimationItem.prototype.videosLoaded = function () {
+    this.trigger('loaded_videos');
+    this.checkLoaded()
+}
+
+/**
+ * 预加载视频
+ */
+AnimationItem.prototype.preloadVideos = function () {
+    if (this.renderer.rendererType == 'skia') {
+        this.videoPreloader.loadAssetsBinary(this.assetsHolder.videoAssets(), this.videosLoaded.bind(this));
+    }
+}
+
+/**
+ * 音频加载完成的回调
+ */
+AnimationItem.prototype.audiosLoaded = function () {
+    this.trigger('loaded_audios');
+    this.checkLoaded()
+}
+
+/**
+ * 预加载音频
+ */
+AnimationItem.prototype.preloadAudios = function () {
+    if (this.renderer.rendererType == 'skia') {
+        this.audioPreloader.loadAssetsBinary(this.assetsHolder.audioAssets(), this.audiosLoaded.bind(this));
+    }
+}
+
 
 /**
  * 字体加载完成的回调
@@ -208,7 +253,7 @@ AnimationItem.prototype.fontsLoaded = function () {
 }
 
 /**
- * 加载字体
+ *  预加加载字体
  */
 AnimationItem.prototype.preloadFonts = function () {
     if (this.renderer.rendererType == 'skia') {
@@ -216,6 +261,9 @@ AnimationItem.prototype.preloadFonts = function () {
     }
 }
 
+/**
+ * 解析json文件，初始化资源，图层
+ */
 AnimationItem.prototype.configAnimation = function (animData) {
     if (!this.renderer) {
         return;
@@ -239,13 +287,14 @@ AnimationItem.prototype.configAnimation = function (animData) {
             animData.fonts = {};
         }
 
-        this.assets = this.animationData.assets;
+        this.assetsHolder.parse(this.animationData.assets);
         this.fonts = this.animationData.fonts.list;
         this.frameRate = this.animationData.fr;
         this.frameMult = this.animationData.fr / 1000;
         this.renderer.searchExtraCompositions(animData.assets);
         this.trigger('config_ready');
         this.preloadImages();
+        this.preloadVideos();
         this.preloadFonts();
         this.loadSegments();
         this.updaFrameModifier();
@@ -273,6 +322,8 @@ AnimationItem.prototype.checkLoaded = function () {
     if (!this.isLoaded &&
         (b_skia || this.renderer.globalData.fontManager.loaded()) &&
         (this.fontPreloader.loaded() || !b_skia) &&
+        (this.videoPreloader.loaded() || !b_skia) &&
+        (this.audioPreloader.loaded() || !b_skia) &&
         (this.imagePreloader.loaded() || (!b_canvas && !b_skia))) {
         this.isLoaded = true;
         dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
@@ -514,7 +565,11 @@ AnimationItem.prototype.destroy = function (name) {
         return;
     }
     this.renderer.destroy();
+    this.assetsHolder.destroy();
     this.imagePreloader.destroy();
+    this.videoPreloader.destroy();
+    this.audioPreloader.destroy();
+    this.fontPreloader.destroy();
     this.trigger('destroy');
     this._cbs = null;
     this.onEnterFrame = this.onLoopComplete = this.onComplete = this.onSegmentStart = this.onDestroy = null;
@@ -562,11 +617,30 @@ AnimationItem.prototype.getAssetsPath = function (assetData) {
     return path;
 };
 
-AnimationItem.prototype.getAssetData = function (id) {
-    var i = 0, len = this.assets.length;
+/**
+ * 根据id，获取图片资源
+ */
+AnimationItem.prototype.getImageData = function (id) {
+    let is = this.assetsHolder.imageAssets();
+    var i = 0, len = is.length;
     while (i < len) {
-        if (id == this.assets[i].id) {
-            return this.assets[i];
+        if (id == is[i].id) {
+            return is[i];
+        }
+        i += 1;
+    }
+};
+
+
+/**
+ * 根据id，获取视频资源
+ */
+AnimationItem.prototype.getVideoData = function (id) {
+    let vs = this.assetsHolder.videoAssets();
+    var i = 0, len = vs.length;
+    while (i < len) {
+        if (id == vs[i].id) {
+            return vs[i];
         }
         i += 1;
     }
@@ -637,7 +711,7 @@ AnimationItem.prototype.trigger = function (name) {
 };
 
 AnimationItem.prototype.onError = function (error) {
-    console.log(error);
+    console.log(error.nativeError);
 }
 
 AnimationItem.prototype.triggerRenderFrameError = function (nativeError) {

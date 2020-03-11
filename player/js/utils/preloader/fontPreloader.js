@@ -1,5 +1,8 @@
 var FontPreloader = (function () {
 
+    /**
+     * 字体加载完成，调用回调函数
+     */
     function fontLoaded() {
         this.loadedFonts += 1;
         if (this.loadedFonts === this.totalFonts) {
@@ -9,9 +12,12 @@ var FontPreloader = (function () {
         }
     }
 
-    function getFontsPath(fontData, fontsPath, original_path) {
-        var path = fontData.u+fontData.fName+'.ttf';
-        return path;
+    /**
+     * 获取字体文件路径
+     * @param {*} fontData 
+     */
+    function getFontsPath(fontData) {
+        return fontData.u + fontData.fName + '.ttf';
         //return fontData.fPath;
     }
 
@@ -21,7 +27,7 @@ var FontPreloader = (function () {
     * @param {{字体资源信息}} fontData 
     */
     function createFontBinaryData(fontData) {
-        var path = getFontsPath(fontData, this.fontsPath, this.path);
+        var path = getFontsPath(fontData);
 
         var ob = {
             fontData: fontData
@@ -55,6 +61,10 @@ var FontPreloader = (function () {
         }
     }
 
+    /**
+     * 获取字体文件
+     * @param {*} fontData 
+     */
     function getFont(fontData) {
         var i = 0, len = this.fonts.length;
         while (i < len) {
@@ -65,6 +75,9 @@ var FontPreloader = (function () {
         }
     }
 
+    /**
+     * 销毁字体资源，字体管理类
+     */
     function destroy() {
         this.fontsLoadedCb = null;
         this.fonts.length = 0;
@@ -73,6 +86,11 @@ var FontPreloader = (function () {
         });
     }
 
+    /**
+    * 字体是否加载完成
+    * true：加载完成
+    * false：未加载完成
+    */
     function loaded() {
         return this.totalFonts === this.loadedFonts;
     }
@@ -84,8 +102,6 @@ var FontPreloader = (function () {
         this.destroy = destroy;
         this.getFont = getFont;
         this._fontLoaded = fontLoaded;
-        this.fontsPath = '';
-        this.path = '';
         this.totalFonts = 0;
         this.loadedFonts = 0;
         this.fontsLoadedCb = null;

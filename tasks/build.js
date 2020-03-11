@@ -165,11 +165,23 @@ const scripts = [
 		builds: defaultBuilds
 	},
 	{
-		src: 'js/utils/imagePreloader.js',
+		src: 'js/utils/assetsHolder.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/utils/preloader/imagePreloader.js',
 		builds: ['full','canvas','canvas_light','html','html_light','svg','svg_light']
 	},
 	{
-		src: 'js/utils/fontPreloader.js',
+		src: 'js/utils/preloader/videoPreloader.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/utils/preloader/audioPreloader.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/utils/preloader/fontPreloader.js',
 		builds: ['full','skia']
 	},
 	{
@@ -482,6 +494,10 @@ const scripts = [
 	},
 	{
 		src: 'js/elements/skiaElements/SkiaTextElement.js',
+		builds: ['full','skia']
+	},
+	{
+		src: 'js/elements/skiaElements/SkiaVideoElement.js',
 		builds: ['full','skia']
 	},
 	{
