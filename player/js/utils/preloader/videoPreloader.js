@@ -30,9 +30,22 @@ var VideoPreloader = (function () {
         var ob = {
             assetData: assetData
         }
-
+        ob.videoReaderWorker = new Worker('VideoReaderWorker.js');
+        ob.videoReaderWorker.postMessage({'type':'load','args':path});
+        ob.videoReaderWorker.onmessage = function (e) {
+            var data =e.data;
+            switch (data.type) {
+                case 'loaded':
+                    console.log( data.args);
+                    break;
+            
+                default:
+                    break;
+            }
+        };
         fetch(path).then(response => response.arrayBuffer())
             .then(buffer => {
+                
                 ob.video = buffer;
                 this._videoLoaded();
             });

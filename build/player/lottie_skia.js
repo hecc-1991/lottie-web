@@ -5973,9 +5973,22 @@ var VideoPreloader = (function () {
         var ob = {
             assetData: assetData
         }
-
+        ob.videoReaderWorker = new Worker('VideoReaderWorker.js');
+        ob.videoReaderWorker.postMessage({'type':'load','args':path});
+        ob.videoReaderWorker.onmessage = function (e) {
+            var data =e.data;
+            switch (data.type) {
+                case 'loaddone':
+                    console.log( data.args);
+                    break;
+            
+                default:
+                    break;
+            }
+        };
         fetch(path).then(response => response.arrayBuffer())
             .then(buffer => {
+                
                 ob.video = buffer;
                 this._videoLoaded();
             });
@@ -7855,7 +7868,7 @@ BaseRenderer.prototype.setupGlobalData = function (animData, fontsContainer) {
     this.globalData.fontManager = new FontManager();
     this.globalData.fontManager.addChars(animData.chars);
     this.globalData.fontManager.addFonts(animData.fonts, fontsContainer);
-    this.globalData.getAssetData = this.animationItem.getAssetData.bind(this.animationItem);
+    this.globalData.getImageData = this.animationItem.getImageData.bind(this.animationItem);
     this.globalData.getFontData = this.animationItem.getFontData.bind(this.animationItem);
     this.globalData.getVideoData = this.animationItem.getVideoData.bind(this.animationItem);
     this.globalData.getAssetsPath = this.animationItem.getAssetsPath.bind(this.animationItem);
@@ -10683,7 +10696,7 @@ ICompElement.prototype.destroy = function(){
 };
 
 function IImageElement(data,globalData,comp){
-    this.assetData = globalData.getAssetData(data.refId);
+    this.assetData = globalData.getImageData(data.refId);
     this.initElement(data,globalData,comp);
     this.sourceRect = {top:0,left:0,width:this.assetData.w,height:this.assetData.h};
 }
@@ -11918,7 +11931,7 @@ CVBaseElement.prototype.hide = CVBaseElement.prototype.hideElement;
 CVBaseElement.prototype.show = CVBaseElement.prototype.showElement;
 
 function CVImageElement(data, globalData, comp){
-    this.assetData = globalData.getAssetData(data.refId);
+    this.assetData = globalData.getImageData(data.refId);
     this.img = globalData.imageLoader.getImage(this.assetData);
     this.initElement(data,globalData,comp);
 }
@@ -12823,7 +12836,7 @@ SkiaBaseElement.prototype.hide = SkiaBaseElement.prototype.hideElement;
 SkiaBaseElement.prototype.show = SkiaBaseElement.prototype.showElement;
 
 function SkiaImageElement(data, globalData, comp){
-    this.assetData = globalData.getAssetData(data.refId);
+    this.assetData = globalData.getImageData(data.refId);
     this.img = globalData.imageLoader.getImage(this.assetData);
     this.initElement(data,globalData,comp);
 }
@@ -14168,7 +14181,7 @@ HTextElement.prototype.renderInnerContent = function() {
     }
 };
 function HImageElement(data,globalData,comp){
-    this.assetData = globalData.getAssetData(data.refId);
+    this.assetData = globalData.getImageData(data.refId);
     this.initElement(data,globalData,comp);
 }
 
@@ -14573,7 +14586,6 @@ var AnimationItem = function () {
     this.playDirection = 1;
     this.playCount = 0;
     this.animationData = {};
-    this.assets = [];
     this.fonts = [];
     this.isPaused = true;
     this.autoplay = false;
@@ -14590,6 +14602,7 @@ var AnimationItem = function () {
     this.projectInterface = ProjectInterface();
     this.imagePreloader = new ImagePreloader();
     this.videoPreloader = new VideoPreloader();
+    this.audioPreloader = new AudioPreloader();
     this.fontPreloader = new FontPreloader();
     this.assetsHolder = new AssetsHolder();
 };
@@ -14786,6 +14799,23 @@ AnimationItem.prototype.preloadVideos = function () {
     }
 }
 
+/**
+ * 音频加载完成的回调
+ */
+AnimationItem.prototype.audiosLoaded = function () {
+    this.trigger('loaded_audios');
+    this.checkLoaded()
+}
+
+/**
+ * 预加载音频
+ */
+AnimationItem.prototype.preloadAudios = function () {
+    if (this.renderer.rendererType == 'skia') {
+        this.audioPreloader.loadAssetsBinary(this.assetsHolder.audioAssets(), this.audiosLoaded.bind(this));
+    }
+}
+
 
 /**
  * 字体加载完成的回调
@@ -14830,8 +14860,7 @@ AnimationItem.prototype.configAnimation = function (animData) {
             animData.fonts = {};
         }
 
-        this.assets = this.animationData.assets;
-        this.assetsHolder.parse(this.assets);
+        this.assetsHolder.parse(this.animationData.assets);
         this.fonts = this.animationData.fonts.list;
         this.frameRate = this.animationData.fr;
         this.frameMult = this.animationData.fr / 1000;
@@ -14867,6 +14896,7 @@ AnimationItem.prototype.checkLoaded = function () {
         (b_skia || this.renderer.globalData.fontManager.loaded()) &&
         (this.fontPreloader.loaded() || !b_skia) &&
         (this.videoPreloader.loaded() || !b_skia) &&
+        (this.audioPreloader.loaded() || !b_skia) &&
         (this.imagePreloader.loaded() || (!b_canvas && !b_skia))) {
         this.isLoaded = true;
         dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
@@ -15111,6 +15141,7 @@ AnimationItem.prototype.destroy = function (name) {
     this.assetsHolder.destroy();
     this.imagePreloader.destroy();
     this.videoPreloader.destroy();
+    this.audioPreloader.destroy();
     this.fontPreloader.destroy();
     this.trigger('destroy');
     this._cbs = null;
@@ -15162,7 +15193,7 @@ AnimationItem.prototype.getAssetsPath = function (assetData) {
 /**
  * 根据id，获取图片资源
  */
-AnimationItem.prototype.getAssetData = function (id) {
+AnimationItem.prototype.getImageData = function (id) {
     let is = this.assetsHolder.imageAssets();
     var i = 0, len = is.length;
     while (i < len) {

@@ -5,7 +5,7 @@ const UglifyJS = require("uglify-js");
 const rootFolder = 'player/';
 const bm_version = '5.6.5';
 const buildReducedVersion = process.argv[2] === 'reduced'
-const defaultBuilds = ['full','svg_light','svg','canvas','html', 'canvas_light', 'html_light', 'canvas_worker','skia']
+const defaultBuilds = ['full', 'svg_light', 'svg', 'canvas', 'html', 'canvas_light', 'html_light', 'canvas_worker', 'skia']
 
 const scripts = [
 	{
@@ -26,7 +26,7 @@ const scripts = [
 	},
 	{
 		src: 'js/utils/helpers/svg_elements.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/utils/helpers/html_elements.js',
@@ -42,35 +42,35 @@ const scripts = [
 	},
 	{
 		src: 'js/elements/helpers/skiaContent/SkiaBaseContent.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/helpers/skiaContent/SkiaFill.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/helpers/skiaContent/SkiaStroke.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/helpers/skiaContent/CanvasPattern.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/helpers/skiaContent/LinearCanvasGradient.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/helpers/skiaContent/RadialCanvasGradient.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/utils/skia/color.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/utils/skia/SKIA.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/3rd_party/transformation-matrix.js',
@@ -166,23 +166,23 @@ const scripts = [
 	},
 	{
 		src: 'js/utils/assetsHolder.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/utils/preloader/imagePreloader.js',
-		builds: ['full','canvas','canvas_light','html','html_light','svg','svg_light']
+		builds: ['full', 'canvas', 'canvas_light', 'html', 'html_light', 'svg', 'svg_light']
 	},
 	{
 		src: 'js/utils/preloader/videoPreloader.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/utils/preloader/audioPreloader.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/utils/preloader/fontPreloader.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/utils/imagePreloaderWorkerOverride.js',
@@ -262,7 +262,7 @@ const scripts = [
 	},
 	{
 		src: 'js/renderers/CanvasRenderer.js',
-		builds: ['full','canvas','canvas_light','canvas_worker']
+		builds: ['full', 'canvas', 'canvas_light', 'canvas_worker']
 	},
 	{
 		src: 'js/renderers/SkiaCanvasRenderer.js',
@@ -274,7 +274,7 @@ const scripts = [
 	},
 	{
 		src: 'js/renderers/HybridRenderer.js',
-		builds: ['full','html','html_light']
+		builds: ['full', 'html', 'html_light']
 	},
 	{
 		src: 'js/mask.js',
@@ -306,7 +306,7 @@ const scripts = [
 	},
 	{
 		src: 'js/elements/helpers/shapes/SVGStyleData.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/helpers/shapes/SVGShapeData.js',
@@ -314,23 +314,23 @@ const scripts = [
 	},
 	{
 		src: 'js/elements/helpers/shapes/SVGTransformData.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/helpers/shapes/SVGStrokeStyleData.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/helpers/shapes/SVGFillStyleData.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/helpers/shapes/SVGGradientFillStyleData.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/helpers/shapes/SVGGradientStrokeStyleData.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/helpers/shapes/ShapeGroupData.js',
@@ -338,7 +338,7 @@ const scripts = [
 	},
 	{
 		src: 'js/elements/helpers/shapes/SVGElementsRenderer.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/helpers/shapes/ShapeTransformManager.js',
@@ -346,7 +346,7 @@ const scripts = [
 	},
 	{
 		src: 'js/elements/helpers/shapes/CVShapeData.js',
-		builds: ['full','canvas','canvas_light','canvas_worker']
+		builds: ['full', 'canvas', 'canvas_light', 'canvas_worker']
 	},
 	{
 		src: 'js/elements/BaseElement.js',
@@ -382,11 +382,11 @@ const scripts = [
 	},
 	{
 		src: 'js/elements/svgElements/SVGCompElement.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/svgElements/SVGTextElement.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/svgElements/SVGShapeElement.js',
@@ -394,147 +394,147 @@ const scripts = [
 	},
 	{
 		src: 'js/elements/svgElements/effects/SVGTintEffect.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/svgElements/effects/SVGFillFilter.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/svgElements/effects/SVGGaussianBlurEffect.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/svgElements/effects/SVGStrokeEffect.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/svgElements/effects/SVGTritoneFilter.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/svgElements/effects/SVGProLevelsFilter.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/svgElements/effects/SVGDropShadowEffect.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/svgElements/effects/SVGMatte3Effect.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/svgElements/SVGEffects.js',
-		builds: ['full','svg','svg_light','html','html_light']
+		builds: ['full', 'svg', 'svg_light', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/canvasElements/CVContextData.js',
-		builds: ['full','canvas','canvas_light','canvas_worker']
+		builds: ['full', 'canvas', 'canvas_light', 'canvas_worker']
 	},
 	{
 		src: 'js/elements/canvasElements/CVBaseElement.js',
-		builds: ['full','canvas','canvas_light','canvas_worker']
+		builds: ['full', 'canvas', 'canvas_light', 'canvas_worker']
 	},
 	{
 		src: 'js/elements/canvasElements/CVImageElement.js',
-		builds: ['full','canvas','canvas_light']
+		builds: ['full', 'canvas', 'canvas_light']
 	},
 	{
 		src: 'js/elements/canvasElements/CVCompElement.js',
-		builds: ['full','canvas','canvas_light','canvas_worker']
+		builds: ['full', 'canvas', 'canvas_light', 'canvas_worker']
 	},
 	{
 		src: 'js/elements/canvasElements/CVMaskElement.js',
-		builds: ['full','canvas','canvas_light','canvas_worker']
+		builds: ['full', 'canvas', 'canvas_light', 'canvas_worker']
 	},
 	{
 		src: 'js/elements/canvasElements/CVShapeElement.js',
-		builds: ['full','canvas','canvas_light','canvas_worker']
+		builds: ['full', 'canvas', 'canvas_light', 'canvas_worker']
 	},
 	{
 		src: 'js/elements/canvasElements/CVSolidElement.js',
-		builds: ['full','canvas','canvas_light','canvas_worker']
+		builds: ['full', 'canvas', 'canvas_light', 'canvas_worker']
 	},
 	{
 		src: 'js/elements/canvasElements/CVTextElement.js',
-		builds: ['full','canvas','canvas_light']
+		builds: ['full', 'canvas', 'canvas_light']
 	},
 	{
 		src: 'js/elements/canvasElements/CVEffects.js',
-		builds: ['full','canvas','canvas_light','html','html_light','canvas_worker']
+		builds: ['full', 'canvas', 'canvas_light', 'html', 'html_light', 'canvas_worker']
 	},
 	{
 		src: 'js/elements/skiaElements/SkiaContextData.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/skiaElements/SkiaBaseElement.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/skiaElements/SkiaImageElement.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/skiaElements/SkiaCompElement.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/skiaElements/SkiaMaskElement.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/skiaElements/SkiaShapeElement.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/skiaElements/SkiaSolidElement.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/skiaElements/SkiaTextElement.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/skiaElements/SkiaVideoElement.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/skiaElements/SkiaEffects.js',
-		builds: ['full','skia']
+		builds: ['full', 'skia']
 	},
 	{
 		src: 'js/elements/htmlElements/HBaseElement.js',
-		builds: ['full','html','html_light']
+		builds: ['full', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/htmlElements/HSolidElement.js',
-		builds: ['full','html','html_light']
+		builds: ['full', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/htmlElements/HCompElement.js',
-		builds: ['full','html','html_light']
+		builds: ['full', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/htmlElements/HShapeElement.js',
-		builds: ['full','html','html_light']
+		builds: ['full', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/htmlElements/HTextElement.js',
-		builds: ['full','html','html_light']
+		builds: ['full', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/htmlElements/HImageElement.js',
-		builds: ['full','html','html_light']
+		builds: ['full', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/htmlElements/HCameraElement.js',
-		builds: ['full','html','html_light']
+		builds: ['full', 'html', 'html_light']
 	},
 	{
 		src: 'js/elements/htmlElements/HEffects.js',
-		builds: ['full','html','html_light']
+		builds: ['full', 'html', 'html_light']
 	},
 	{
 		src: 'js/animation/AnimationManager.js',
@@ -554,67 +554,67 @@ const scripts = [
 	},
 	{
 		src: 'js/utils/expressions/Expressions.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/ExpressionManager.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/expressionHelpers.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/ExpressionPropertyDecorator.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/ExpressionTextPropertyDecorator.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/ShapeInterface.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/TextInterface.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/LayerInterface.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/CompInterface.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/TransformInterface.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/ProjectInterface.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/EffectInterface.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/MaskInterface.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/ExpressionValueFactory.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/utils/expressions/TextSelectorPropertyDecorator.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/effects/SliderEffect.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	},
 	{
 		src: 'js/effects/EffectsManagerPlaceholder.js',
@@ -622,15 +622,15 @@ const scripts = [
 	},
 	{
 		src: 'js/EffectsManager.js',
-		builds: ['full','svg','canvas','html','canvas_worker']
+		builds: ['full', 'svg', 'canvas', 'html', 'canvas_worker']
 	}
 ]
 
 function loadIndex() {
-	return new Promise((resolve, reject)=>{
+	return new Promise((resolve, reject) => {
 
 		function onLoad(err, result) {
-			if(err) {
+			if (err) {
 				reject(err);
 			} else {
 				resolve(result);
@@ -641,34 +641,34 @@ function loadIndex() {
 }
 
 function parseHTML(html) {
-	return new Promise((resolve, reject)=> {
+	return new Promise((resolve, reject) => {
 		try {
 			const $ = cheerio.load(html);
 			resolve($);
-		} catch(err) {
+		} catch (err) {
 			reject(err);
 		}
 	})
 }
 
 function getScripts($) {
-	return new Promise((resolve, reject)=> {
+	return new Promise((resolve, reject) => {
 		try {
 			const scriptNodes = []
 			let shouldAddToScripts = false;
 			$("head").contents().each((index, node) => {
-				if(node.nodeType === 8 && node.data.indexOf('build:js') !== -1) {
+				if (node.nodeType === 8 && node.data.indexOf('build:js') !== -1) {
 					shouldAddToScripts = true;
-				} else if(shouldAddToScripts) {
-					if(node.type === 'script') {
+				} else if (shouldAddToScripts) {
+					if (node.type === 'script') {
 
 						scriptNodes.push(node)
-					} else if(node.nodeType === 8 && node.data.indexOf('endbuild') !== -1) {
+					} else if (node.nodeType === 8 && node.data.indexOf('endbuild') !== -1) {
 						shouldAddToScripts = false;
 					}
 				}
 			})
-			const scripts = scriptNodes.map((node)=>{
+			const scripts = scriptNodes.map((node) => {
 				const builds = node.attribs['data-builds'] ? node.attribs['data-builds'].split(',') : defaultBuilds
 				return {
 					src: node.attribs.src,
@@ -676,7 +676,7 @@ function getScripts($) {
 				}
 			})
 			resolve(scripts);
-		} catch(err) {
+		} catch (err) {
 			reject(err);
 		}
 
@@ -684,57 +684,57 @@ function getScripts($) {
 }
 
 function concatScripts(scripts, build) {
-	return new Promise((resolve, reject)=>{
+	return new Promise((resolve, reject) => {
 		// Concatenating scripts
 		try {
 			let scriptsString = ''
-			scripts.forEach((script)=> {
-				if(script.builds.indexOf(build) !== -1) {
-					scriptsString += fs.readFileSync(`${rootFolder}${script.src}`, {encoding: 'utf8'});
+			scripts.forEach((script) => {
+				if (script.builds.indexOf(build) !== -1) {
+					scriptsString += fs.readFileSync(`${rootFolder}${script.src}`, { encoding: 'utf8' });
 					scriptsString += '\r\n';
 				}
 			})
 			resolve(scriptsString);
-		} catch(err) {
+		} catch (err) {
 			reject(err);
 		}
 	});
 }
 
 function wrapScriptWithModule(code, build) {
-	return new Promise((resolve, reject)=>{
+	return new Promise((resolve, reject) => {
 		try {
 			// Wrapping with module
-			let moduleFileName = (build =='canvas_worker') ? 'module_worker' : 'module';
+			let moduleFileName = (build == 'canvas_worker') ? 'module_worker' : 'module';
 			let wrappedCode = fs.readFileSync(`${rootFolder}js/${moduleFileName}.js`, "utf8");
-			wrappedCode = wrappedCode.replace('/*<%= contents %>*/',code);
-			wrappedCode = wrappedCode.replace('[[BM_VERSION]]',bm_version);
+			wrappedCode = wrappedCode.replace('/*<%= contents %>*/', code);
+			wrappedCode = wrappedCode.replace('[[BM_VERSION]]', bm_version);
 			resolve(wrappedCode);
-		} catch(err) {
+		} catch (err) {
 			reject(err);
 		}
 	});
 }
 
 function uglifyCode(code) {
-	return new Promise((resolve, reject)=>{
+	return new Promise((resolve, reject) => {
 		try {
 			const result = UglifyJS.minify(code, {
-				output: 
-					{
-						ascii_only:true
-					},
-					toplevel:true,
-					mangle: {
-						reserved: ['lottie']
-					}
-				});
+				output:
+				{
+					ascii_only: true
+				},
+				toplevel: true,
+				mangle: {
+					reserved: ['lottie']
+				}
+			});
 			if (result.error) {
 				reject(result.error)
 			} else {
 				resolve(result.code)
 			}
-		} catch(err) {
+		} catch (err) {
 			reject(err)
 		}
 	})
@@ -768,7 +768,7 @@ async function buildVersion(scripts, version) {
 }
 
 function save(code, fileName) {
-	return new Promise((resolve, reject)=> {
+	return new Promise((resolve, reject) => {
 		fs.writeFile(`build/player/${fileName}`, code, (err) => {
 			if (err) {
 				reject(err)
@@ -786,109 +786,123 @@ function noop(code) {
 function buildVersions(scripts) {
 	return new Promise((resolve, reject) => {
 		let versions = [
-		
-		{
-			fileName: 'lottie_skia.js',
-			build: 'full',
-			process: noop
-		}
-		/* 
-		{
-			fileName: 'lottie.js',
-			build: 'full',
-			process: noop
-		},
-		{
-			fileName: 'lottie.min.js',
-			build: 'full',
-			process: uglifyCode
-		},
-		{
-			fileName: 'lottie_light.js',
-			build: 'svg_light',
-			process: noop
-		},
-		{
-			fileName: 'lottie_light.min.js',
-			build: 'svg_light',
-			process: uglifyCode
-		},
-		{
-			fileName: 'lottie_svg.js',
-			build: 'svg',
-			process: noop
-		},
-		{
-			fileName: 'lottie_svg.min.js',
-			build: 'svg',
-			process: uglifyCode
-		},
-		{
-			fileName: 'lottie_light_canvas.js',
-			build: 'canvas_light',
-			process: noop
-		},
-		{
-			fileName: 'lottie_light_canvas.min.js',
-			build: 'canvas_light',
-			process: uglifyCode
-		},
-		{
-			fileName: 'lottie_canvas.js',
-			build: 'canvas',
-			process: noop
-		},
-		{
-			fileName: 'lottie_canvas.min.js',
-			build: 'canvas',
-			process: uglifyCode
-		},
-		{
-			fileName: 'lottie_canvas_worker.js',
-			build: 'canvas_worker',
-			process: noop
-		},
-		{
-			fileName: 'lottie_canvas_worker.min.js',
-			build: 'canvas_worker',
-			process: uglifyCode
-		},
-		{
-			fileName: 'lottie_html.js',
-			build: 'html',
-			process: noop
-		},
-		{
-			fileName: 'lottie_html.min.js',
-			build: 'html',
-			process: uglifyCode
-		},
-		{
-			fileName: 'lottie_light_html.js',
-			build: 'html_light',
-			process: noop
-		},
-		{
-			fileName: 'lottie_light_html.min.js',
-			build: 'html_light',
-			process: uglifyCode
-		} */
-	];
+
+			{
+				fileName: 'lottie_skia.js',
+				build: 'full',
+				process: noop
+			}
+			/* 
+			{
+				fileName: 'lottie.js',
+				build: 'full',
+				process: noop
+			},
+			{
+				fileName: 'lottie.min.js',
+				build: 'full',
+				process: uglifyCode
+			},
+			{
+				fileName: 'lottie_light.js',
+				build: 'svg_light',
+				process: noop
+			},
+			{
+				fileName: 'lottie_light.min.js',
+				build: 'svg_light',
+				process: uglifyCode
+			},
+			{
+				fileName: 'lottie_svg.js',
+				build: 'svg',
+				process: noop
+			},
+			{
+				fileName: 'lottie_svg.min.js',
+				build: 'svg',
+				process: uglifyCode
+			},
+			{
+				fileName: 'lottie_light_canvas.js',
+				build: 'canvas_light',
+				process: noop
+			},
+			{
+				fileName: 'lottie_light_canvas.min.js',
+				build: 'canvas_light',
+				process: uglifyCode
+			},
+			{
+				fileName: 'lottie_canvas.js',
+				build: 'canvas',
+				process: noop
+			},
+			{
+				fileName: 'lottie_canvas.min.js',
+				build: 'canvas',
+				process: uglifyCode
+			},
+			{
+				fileName: 'lottie_canvas_worker.js',
+				build: 'canvas_worker',
+				process: noop
+			},
+			{
+				fileName: 'lottie_canvas_worker.min.js',
+				build: 'canvas_worker',
+				process: uglifyCode
+			},
+			{
+				fileName: 'lottie_html.js',
+				build: 'html',
+				process: noop
+			},
+			{
+				fileName: 'lottie_html.min.js',
+				build: 'html',
+				process: uglifyCode
+			},
+			{
+				fileName: 'lottie_light_html.js',
+				build: 'html_light',
+				process: noop
+			},
+			{
+				fileName: 'lottie_light_html.min.js',
+				build: 'html_light',
+				process: uglifyCode
+			} */
+		];
 
 		if (buildReducedVersion) {
-			versions = versions.splice(0,1);
+			versions = versions.splice(0, 1);
 		}
 
-		const buildProcesses = versions.map((version)=>{
+		// 复制worker文件
+		var workerScript = [
+			'js/worker/VideoReaderWorker.js'
+		];
+		workerScript.forEach(script=>{
+			fs.copyFile(`${rootFolder}js/worker/VideoReaderWorker.js`,
+			`demo/video/VideoReaderWorker.js`,
+			function (err) {
+				if(err) console.log('something wrong was happened when copy file')
+				else console.log('copy file succeed');
+			});
+		});
+
+
+		const buildProcesses = versions.map((version) => {
 			return buildVersion(scripts, version)
 		})
 		Promise.all(buildProcesses)
-		.then(() => {
-			resolve('Build Process Ended')
-		})
-		.catch((err)=>{
-			reject(err)
-		})
+			.then(() => {
+				resolve('Build Process Ended')
+			})
+			.catch((err) => {
+				reject(err)
+			})
 	})
 }
 
@@ -904,7 +918,7 @@ async function build() {
 		const result = await buildVersions(scripts);
 		console.log(result);
 
-	} catch(err) {
+	} catch (err) {
 		handleError(err);
 	}
 }
