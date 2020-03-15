@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<script>
+
+    var worker = new Worker('out/VideoReaderWorker.js');
+    worker.onmessage = function (e) {
+        var data = e.data;
+        console.log(data);
+        if (data.type == 'init') {
+            worker.postMessage({ type: 'load', args: { path: 'test.mp4', frameRate: 25 } });
+        }
+    }
+
+</script>
