@@ -17,7 +17,7 @@ var VideoPreloader = (function () {
      * @param {*} assetData 
      */
     function getAssetsPath(assetData) {
-        return assetData.u+assetData.p;
+        return assetData.u + assetData.p;
     }
 
     /**
@@ -31,23 +31,29 @@ var VideoPreloader = (function () {
             assetData: assetData
         }
         ob.videoReaderWorker = new Worker('VideoReaderWorker.js');
-        ob.videoReaderWorker.postMessage({'type':'load','args':path});
+
         ob.videoReaderWorker.onmessage = function (e) {
-            var data =e.data;
+            var data = e.data;
+            console.log(data);
             switch (data.type) {
                 case 'loaded':
-                    console.log( data.args);
+                    this._videoLoaded();
                     break;
-            
+
                 default:
                     break;
             }
         };
         fetch(path).then(response => response.arrayBuffer())
             .then(buffer => {
-                
-                ob.video = buffer;
-                this._videoLoaded();
+                var req = {
+                    type: 'load',
+                    args: {
+                        buffer: buffer
+                    }
+                }
+                ob.videoReaderWorker.postMessage(req, [req.args.buffer]);
+
             });
 
         return ob;

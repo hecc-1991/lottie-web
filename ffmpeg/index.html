@@ -5,8 +5,18 @@
     worker.onmessage = function (e) {
         var data = e.data;
         console.log(data);
+        var bb = new Blob(['video data'], { type: "text/plain" });
+        var bb2 = new Blob([new ArrayBuffer(10)], { type: "application/octet-binary" });
         if (data.type == 'init') {
-            worker.postMessage({ type: 'load', args: { path: 'test.mp4', frameRate: 25 } });
+
+            var req = {
+                type: 'load',
+                args: {
+                    buffer: new ArrayBuffer(100),
+                    bb: bb
+                }
+            };
+            worker.postMessage(req, [req.args.buffer]);
         }
     }
 
