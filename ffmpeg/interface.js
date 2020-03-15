@@ -1,5 +1,5 @@
 VideoReaderWorker.onRuntimeInitialized = function () {
-    postMessage({type:'init'});
+    postMessage({ type: 'init' });
 }
 
 var videoReader;
@@ -10,8 +10,8 @@ self.onmessage = function (e) {
     var args = data.args;
     switch (type) {
         case 'load':
-            videoReader = new VideoReaderWorker.VideoReader();
-            videoReader.load(args.path,args.frameRate);
+            videoReader = new VideoReaderWorker.VideoWorker();
+            videoReader.load(args.path, args.frameRate);
             break;
         case 'frame':
             videoReader.readFrame(args.time);
