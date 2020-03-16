@@ -51,13 +51,13 @@ TUCODEC_SRC='
 
 
 
-${EMCXX} \
-    -Itucodec/include \
-    -I/home/tutu/hecc/env/FFmpeg \
-    ${TUCODEC_SRC} \
-    -std=c++17 \
-    -s WASM=1 \
-    -o $BUILD_DIR/videostream.bc
+#${EMCXX} \
+#    -Itucodec/include \
+#    -I/home/tutu/hecc/env/FFmpeg \
+#    ${TUCODEC_SRC} \
+#    -std=c++17 \
+#    -s WASM=1 \
+#    -o $BUILD_DIR/videostream.bc
 
 #export EMCC_CLOSURE_ARGS="--externs $BASE_DIR/externs.js "
 
@@ -70,6 +70,7 @@ echo "Generating final wasm"
 #$BUILD_DIR/ffmpeg.bc \
 ${EMCXX} \
     -Itucodec/include \
+    -I/home/tutu/hecc/env/FFmpeg \
     -std=c++17 \
     --bind \
 	  --pre-js $BASE_DIR/pre.js \
@@ -82,6 +83,7 @@ ${EMCXX} \
     $BUILD_DIR/libswresample.a \
     $BUILD_DIR/libswscale.a \
     $BUILD_DIR/videostream.bc \
+    -lworkerfs.js \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s STRICT=1 \
     -s TOTAL_MEMORY=128MB \

@@ -1,23 +1,91 @@
 <!DOCTYPE html>
-<script>
 
-    var worker = new Worker('out/VideoReaderWorker.js');
-    worker.onmessage = function (e) {
-        var data = e.data;
-        console.log(data);
-        var bb = new Blob(['video data'], { type: "text/plain" });
-        var bb2 = new Blob([new ArrayBuffer(10)], { type: "application/octet-binary" });
-        if (data.type == 'init') {
+<head>
 
-            var req = {
-                type: 'load',
-                args: {
-                    buffer: new ArrayBuffer(100),
-                    bb: bb
+</head>
+
+<body>
+    <script>
+
+        /*  var worker = new Worker('out/VideoReaderWorker.js');
+         worker.onmessage = function (e) {
+             var data = e.data;
+             console.log(data);
+             var bb = new Blob(['video data'], { type: "text/plain" });
+             var bb2 = new Blob([new ArrayBuffer(10)], { type: "application/octet-binary" });
+             if (data.type == 'init') {
+ 
+                 var req = {
+                     type: 'load',
+                     args: {
+                         path: 'video_0.mp4',
+                         buffer: new ArrayBuffer(100),
+                         frameRate: 25,
+                         bb: bb
+                     }
+                 };
+                 worker.postMessage(req, [req.args.buffer]);
+             }
+         } */
+
+    </script>
+
+    <input type="file" id="fileInput" name="file" multiple="multiple" accept="*">
+    <script>
+        var w;
+        var fileInput = document.querySelector("#fileInput");
+        fileInput.addEventListener("change", function (event) {
+            // 文件列表对象
+            var fileList = this.files;
+            // 获取第一个文件
+            var file = fileInput.files[0];
+            // 文件名
+            var filename = file.name;
+            // 文件大小
+            var filesize = file.size;
+            //文件的 MIME 类型，如果分辨不出类型，则为空字符串，该属性只读
+            var type = file.type;
+            // 文件的上次修改时间，格式为时间戳
+            var lastModified = file.lastModified;
+            // 文件的上次修改时间，格式为 Date 对象实例
+            var lastModifiedDate = file.lastModifiedDate;
+            console.log(fileList);
+            worker = new Worker("out/VideoReaderWorker.js");
+            worker.onmessage = function (e) {
+                var data = e.data;
+                console.log(data);
+
+                switch (data.type) {
+                    case 'init':
+                        var req = {
+                            type: 'loadFile',
+                            args: {
+                                path: filename,
+                                file: file,
+                                frameRate: 25
+                            }
+                        };
+                        worker.postMessage(req);
+                        break;
+                    case 'loaded':
+                        var req = {
+                            type: 'frame',
+                            args: {
+                                time: 0
+                            }
+                        };
+                        worker.postMessage(req);
+
+                        break;
+                    case 'framed':
+                        break;
+                    default:
+                        break;
                 }
-            };
-            worker.postMessage(req, [req.args.buffer]);
-        }
-    }
+            }
 
-</script>
+        }, false);
+
+    </script>
+
+</body>

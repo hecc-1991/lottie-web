@@ -5,13 +5,13 @@
 
 #include <cstdio>
 
-
-
-namespace pulsevideo {
+namespace pulsevideo
+{
 #if PV_PLATFORM_WIN
 #undef ERROR
 #endif
-enum class LogLevel {
+enum class LogLevel
+{
     kDEBUG,
     kINFO,
     kWARN,
@@ -19,9 +19,7 @@ enum class LogLevel {
     kFATAL
 };
 
-
-
-extern size_t log_printf(LogLevel lv, const char* fmt, ...) ;
+extern size_t log_printf(LogLevel lv, const char *fmt, ...);
 
 //#define LOG(fmt, ...) \
 //    log_printf(fmt, ##__VA_ARGS__)
@@ -29,10 +27,10 @@ extern size_t log_printf(LogLevel lv, const char* fmt, ...) ;
 
 #if LOG_DISABLE
 
-#define LOG_DEBUG
-#define LOG_INFO
-#define LOG_WARN
-#define LOG_ERROR
+#define LOG_DEBUG(fmt, ...)
+#define LOG_INFO(fmt, ...)
+#define LOG_WARN(fmt, ...)
+#define LOG_ERROR(fmt, ...)
 
 #else
 
@@ -43,11 +41,10 @@ extern size_t log_printf(LogLevel lv, const char* fmt, ...) ;
 
 #endif
 
-
 #if PV_PLATFORM_WIN
 
 #endif
 
-}
+} // namespace pulsevideo
 
 #endif
