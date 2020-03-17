@@ -37,6 +37,7 @@ var VideoPreloader = (function () {
             //console.log(data);
             switch (data.type) {
                 case 'init':
+                    // video worker初始化成功 ==> 发指令给 woker线程 去加载视频
                     fetch(path).then(response => response.arrayBuffer())
                         .then(buffer => {
                             var req = {
@@ -52,6 +53,7 @@ var VideoPreloader = (function () {
                         });
                     break;
                 case 'loaded':
+                    // woker线程 视频素材加载完成 ==> 发指令给 woker线程 去解码一帧视频帧
                     ob.videoReaderWorker.postMessage({
                         type: 'next',
                         args: {}
@@ -59,6 +61,7 @@ var VideoPreloader = (function () {
                     _that._videoLoaded();
                     break;
                 case 'renext':
+                    // woker线程 解码下一帧完成
                     ob.frame = data.args.buffer;
                     break;
                 default:

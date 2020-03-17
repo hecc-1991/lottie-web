@@ -5980,6 +5980,7 @@ var VideoPreloader = (function () {
             //console.log(data);
             switch (data.type) {
                 case 'init':
+                    // video worker初始化成功 ==> 发指令给 woker线程 去加载视频
                     fetch(path).then(response => response.arrayBuffer())
                         .then(buffer => {
                             var req = {
@@ -5995,6 +5996,7 @@ var VideoPreloader = (function () {
                         });
                     break;
                 case 'loaded':
+                    // woker线程 视频素材加载完成 ==> 发指令给 woker线程 去解码一帧视频帧
                     ob.videoReaderWorker.postMessage({
                         type: 'next',
                         args: {}
@@ -6002,6 +6004,7 @@ var VideoPreloader = (function () {
                     _that._videoLoaded();
                     break;
                 case 'renext':
+                    // woker线程 解码下一帧完成
                     ob.frame = data.args.buffer;
                     break;
                 default:
@@ -13584,19 +13587,12 @@ extendPrototype([BaseElement, TransformElement, SkiaBaseElement, HierarchyElemen
 SkiaVideoElement.prototype.initElement = SVGShapeElement.prototype.initElement;
 
 SkiaVideoElement.prototype.createContent = function () {
-    /* var req = {
-        type: 'next',
-        args: {
-            time: -1
-        }
-    }
-    this.video.videoReaderWorker.postMessage(req); */
 }
 
 SkiaVideoElement.prototype.prepareFrame = function (num) {
 
 
-    if (this.currentProgress > num) {
+    if (this.currentProgress >= num) {
         console.log(`${this.videoData.id} seek 0 when looping`);
         this.video.videoReaderWorker.postMessage({
             type: 'seek',
@@ -13626,6 +13622,7 @@ SkiaVideoElement.prototype.renderInnerContent = function (parentMatrix) {
             SKIA.CanvasKit().ColorType.BGRA_8888);
         this.skcanvas.drawImage(skImg, 0, 0, null);
         skImg.delete();
+        // 渲染完当前已有数据帧，发指令给 woker线程 去解码下一帧视频帧
         this.video.videoReaderWorker.postMessage({
             type: 'next',
             args: {

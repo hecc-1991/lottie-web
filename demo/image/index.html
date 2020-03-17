@@ -18,7 +18,11 @@
             loop: true,
             prerender: true,
             autoplay: true,
-            path: 'data.json'
+            path: 'data.json',
+            rendererSettings: {
+                dpr: 1.0
+            }
+
 
         };
         var anim = bodymovin.loadAnimation3(animData);

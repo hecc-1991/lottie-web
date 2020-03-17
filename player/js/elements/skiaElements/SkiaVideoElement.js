@@ -10,19 +10,12 @@ extendPrototype([BaseElement, TransformElement, SkiaBaseElement, HierarchyElemen
 SkiaVideoElement.prototype.initElement = SVGShapeElement.prototype.initElement;
 
 SkiaVideoElement.prototype.createContent = function () {
-    /* var req = {
-        type: 'next',
-        args: {
-            time: -1
-        }
-    }
-    this.video.videoReaderWorker.postMessage(req); */
 }
 
 SkiaVideoElement.prototype.prepareFrame = function (num) {
 
 
-    if (this.currentProgress > num) {
+    if (this.currentProgress >= num) {
         console.log(`${this.videoData.id} seek 0 when looping`);
         this.video.videoReaderWorker.postMessage({
             type: 'seek',
@@ -52,6 +45,7 @@ SkiaVideoElement.prototype.renderInnerContent = function (parentMatrix) {
             SKIA.CanvasKit().ColorType.BGRA_8888);
         this.skcanvas.drawImage(skImg, 0, 0, null);
         skImg.delete();
+        // 渲染完当前已有数据帧，发指令给 woker线程 去解码下一帧视频帧
         this.video.videoReaderWorker.postMessage({
             type: 'next',
             args: {
