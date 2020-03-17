@@ -13605,7 +13605,7 @@ SkiaVideoElement.prototype.renderInnerContent = function (parentMatrix) {
             SKIA.CanvasKit().AlphaType.Unpremul,
             SKIA.CanvasKit().ColorType.BGRA_8888);
         this.skcanvas.drawImage(skImg, 0, 0, null);
-
+        skImg.delete();
         var req = {
             type: 'next',
             args: {
