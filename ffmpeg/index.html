@@ -78,6 +78,12 @@
 
                         break;
                     case 'renext':
+                        worker.postMessage({
+                            type: 'seek',
+                            args: {
+                                timestamp: 0
+                            }
+                        });
                         break;
                     default:
                         break;

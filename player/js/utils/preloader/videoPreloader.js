@@ -30,11 +30,11 @@ var VideoPreloader = (function () {
         var ob = {
             assetData: assetData
         }
-        ob.videoReaderWorker = new Worker('VideoReaderWorker.js');
+        ob.videoReaderWorker = new Worker('../../ffmpeg/out/VideoReaderWorker.js');
 
         ob.videoReaderWorker.onmessage = function (e) {
             var data = e.data;
-            console.log(data);
+            //console.log(data);
             switch (data.type) {
                 case 'init':
                     fetch(path).then(response => response.arrayBuffer())
@@ -52,13 +52,10 @@ var VideoPreloader = (function () {
                         });
                     break;
                 case 'loaded':
-                    var req = {
+                    ob.videoReaderWorker.postMessage({
                         type: 'next',
-                        args: {
-                            time: -1
-                        }
-                    }
-                    ob.videoReaderWorker.postMessage(req);
+                        args: {}
+                    });
                     _that._videoLoaded();
                     break;
                 case 'renext':
@@ -108,6 +105,9 @@ var VideoPreloader = (function () {
      */
     function destroy() {
         this.videosLoadedCb = null;
+        this.videos.forEach(element => {
+            element.videoReaderWorker.terminate();
+        });
         this.videos.length = 0;
     }
 

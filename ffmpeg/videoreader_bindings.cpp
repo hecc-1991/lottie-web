@@ -54,23 +54,20 @@ public:
 		return size;
 	}
 
-	int destroy()
+	void destroy()
 	{
-		int ret = 0;
 		auto od_res = stream->Close();
 		if_result_failure(od_res)
 		{
-			ret = -1;
+			printf("VideoWorker destroy failed");
 		}
 		if (stream)
 		{
 			delete stream;
 		}
-
-		return 0;
 	}
 
-	Uint8Array readFrame(float time, uintptr_t tmp)
+	Uint8Array readNextFrame(uintptr_t tmp)
 	{
 		uint8_t *dst = reinterpret_cast<uint8_t *>(tmp);
 		int ret = 0;
@@ -89,6 +86,13 @@ public:
 		return Uint8Array(typed_memory_view(size, dst));
 	}
 
+	void seek(int32_t timestamp)
+	{
+		auto od_res = stream->Seek(static_cast<int64_t>(timestamp));
+		if_result_failure(od_res)
+			printf("VideoWorker seek failed");
+	}
+
 private:
 	VideoReaderStream *stream = nullptr;
 	ISize size;
@@ -105,5 +109,6 @@ EMSCRIPTEN_BINDINGS(work)
 		.function("load", &VideoWorker::load)
 		.function("destroy", &VideoWorker::destroy)
 		.function("getSize", &VideoWorker::getSize)
-		.function("readFrame", &VideoWorker::readFrame, allow_raw_pointers());
+		.function("readNextFrame", &VideoWorker::readNextFrame, allow_raw_pointers())
+		.function("seek", &VideoWorker::seek);
 }

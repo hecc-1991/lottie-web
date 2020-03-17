@@ -8,7 +8,7 @@ const WORK_DIR = '/workdir';
 
 self.onmessage = function (e) {
     var data = e.data;
-    console.log(data);
+    //console.log(data);
     switch (data.type) {
         case 'load':
             videoReader = new VideoReaderWorker.VideoWorker();
@@ -17,14 +17,13 @@ self.onmessage = function (e) {
             FS.mount(WORKERFS, {
                 blobs: [{ name: data.args.path, data: bb }]
             }, WORK_DIR);
-            console.log(bb);
+            //console.log(bb);
             var ret = videoReader.load(WORK_DIR + '/' + data.args.path, data.args.frameRate);
             if (ret == 0) {
-                var rep = {
+                self.postMessage({
                     type: 'loaded',
                     args: {}
-                };
-                self.postMessage(rep);
+                });
             }
             break;
         case 'loadFile':
@@ -35,17 +34,16 @@ self.onmessage = function (e) {
             }, WORK_DIR);
             var ret = videoReader.load(WORK_DIR + '/' + data.args.path, data.args.frameRate);
             if (ret == 0) {
-                var rep = {
+                self.postMessage({
                     type: 'loaded',
                     args: {}
-                };
-                self.postMessage(rep);
+                });
             }
             break;
         case 'next':
             var size = videoReader.getSize();
             var tmp = VideoReaderWorker._malloc(size.width * size.height * 4);
-            var dst = videoReader.readFrame(data.args.time, tmp);
+            var dst = videoReader.readNextFrame(tmp);
             var buffer = dst.slice(0);
             var rep = {
                 type: 'renext',
@@ -68,6 +66,9 @@ self.onmessage = function (e) {
             console.log('buffer2-----------------------------');
             console.log(buffer); */
 
+            break;
+        case 'seek':
+            videoReader.seek(data.args.timestamp);
             break;
         case 'close':
             videoReader.destroy();
