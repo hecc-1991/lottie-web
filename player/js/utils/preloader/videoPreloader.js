@@ -21,12 +21,12 @@ var VideoPreloader = (function () {
     }
 
     /**
-     * 创建图片二进制数据
+     * 创建视频素材解码worker
      * @param {{图片资源信息}} assetData 
      */
     function createVideoBinaryData(assetData) {
         var path = getAssetsPath(assetData);
-
+        var _that = this;
         var ob = {
             assetData: assetData
         }
@@ -36,31 +36,45 @@ var VideoPreloader = (function () {
             var data = e.data;
             console.log(data);
             switch (data.type) {
-                case 'loaded':
-                    this._videoLoaded();
-                    break;
+                case 'init':
+                    fetch(path).then(response => response.arrayBuffer())
+                        .then(buffer => {
+                            var req = {
+                                type: 'load',
+                                args: {
+                                    path: path,
+                                    frameRate: 25,
+                                    buffer: buffer
+                                }
+                            }
+                            ob.videoReaderWorker.postMessage(req, [req.args.buffer]);
 
+                        });
+                    break;
+                case 'loaded':
+                    var req = {
+                        type: 'next',
+                        args: {
+                            time: -1
+                        }
+                    }
+                    ob.videoReaderWorker.postMessage(req);
+                    _that._videoLoaded();
+                    break;
+                case 'renext':
+                    ob.frame = data.args.buffer;
+                    break;
                 default:
                     break;
             }
         };
-        fetch(path).then(response => response.arrayBuffer())
-            .then(buffer => {
-                var req = {
-                    type: 'load',
-                    args: {
-                        buffer: buffer
-                    }
-                }
-                ob.videoReaderWorker.postMessage(req, [req.args.buffer]);
 
-            });
 
         return ob;
     }
 
     /**
-     * 加载图片的二进制数据，即ByteArrry
+     * 加载视频素材
      * @param {图片资源信息数组} assets 
      * @param {回调函数} cb 
      */
@@ -83,7 +97,7 @@ var VideoPreloader = (function () {
         var i = 0, len = this.videos.length;
         while (i < len) {
             if (this.videos[i].assetData === assetData) {
-                return this.videos[i].video;
+                return this.videos[i];
             }
             i += 1;
         }

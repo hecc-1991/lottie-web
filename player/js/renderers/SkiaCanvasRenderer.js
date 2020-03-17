@@ -89,18 +89,18 @@ SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
 /**
  * 反转矩阵
  */
-SkiaCanvasRenderer.prototype.invert = function(m) {
-    var det = m[0]*m[4]*m[8] + m[1]*m[5]*m[6] + m[2]*m[3]*m[7]
-            - m[2]*m[4]*m[6] - m[1]*m[3]*m[8] - m[0]*m[5]*m[7];
+SkiaCanvasRenderer.prototype.invert = function (m) {
+    var det = m[0] * m[4] * m[8] + m[1] * m[5] * m[6] + m[2] * m[3] * m[7]
+        - m[2] * m[4] * m[6] - m[1] * m[3] * m[8] - m[0] * m[5] * m[7];
     if (!det) {
-      return SKIA.CanvasKit().SkMatrix.identity();
+        return SKIA.CanvasKit().SkMatrix.identity();
     }
     return [
-      (m[4]*m[8] - m[5]*m[7])/det, (m[2]*m[7] - m[1]*m[8])/det, (m[1]*m[5] - m[2]*m[4])/det,
-      (m[5]*m[6] - m[3]*m[8])/det, (m[0]*m[8] - m[2]*m[6])/det, (m[2]*m[3] - m[0]*m[5])/det,
-      (m[3]*m[7] - m[4]*m[6])/det, (m[1]*m[6] - m[0]*m[7])/det, (m[0]*m[4] - m[1]*m[3])/det,
+        (m[4] * m[8] - m[5] * m[7]) / det, (m[2] * m[7] - m[1] * m[8]) / det, (m[1] * m[5] - m[2] * m[4]) / det,
+        (m[5] * m[6] - m[3] * m[8]) / det, (m[0] * m[8] - m[2] * m[6]) / det, (m[2] * m[3] - m[0] * m[5]) / det,
+        (m[3] * m[7] - m[4] * m[6]) / det, (m[1] * m[6] - m[0] * m[7]) / det, (m[0] * m[4] - m[1] * m[3]) / det,
     ];
-  };
+};
 
 /**
  * 将当前转换重置为单位矩阵
@@ -110,7 +110,7 @@ SkiaCanvasRenderer.prototype.resetTransform = function () {
     mat = this.invert(mat);
     //(!mat) && (mat = SKIA.CanvasKit().SkMatrix.identity());
     this.skcanvas.concat(mat);
-    
+
 };
 
 /**
@@ -382,13 +382,16 @@ SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {
     if (!this.completeLayers) {
         this.checkLayers(num);
     }
-
+    var hasVideo = false;
     for (i = 0; i < len; i++) {
         if (this.completeLayers || this.elements[i]) {
             this.elements[i].prepareFrame(num - this.layers[i].st);
         }
+        if (this.layers[i].ty == 9) {
+            hasVideo = true;
+        }
     }
-    if (this.globalData._mdf) {
+    if (this.globalData._mdf || hasVideo) {
         if (this.renderConfig.clearCanvas === true) {
             this.clearRect(0, 0, this.transformCanvas.w, this.transformCanvas.h);
         } else {

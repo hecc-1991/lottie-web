@@ -5960,44 +5960,64 @@ var VideoPreloader = (function () {
      * @param {*} assetData 
      */
     function getAssetsPath(assetData) {
-        return assetData.u+assetData.p;
+        return assetData.u + assetData.p;
     }
 
     /**
-     * 创建图片二进制数据
+     * 创建视频素材解码worker
      * @param {{图片资源信息}} assetData 
      */
     function createVideoBinaryData(assetData) {
         var path = getAssetsPath(assetData);
-
+        var _that = this;
         var ob = {
             assetData: assetData
         }
         ob.videoReaderWorker = new Worker('VideoReaderWorker.js');
-        ob.videoReaderWorker.postMessage({'type':'load','args':path});
+
         ob.videoReaderWorker.onmessage = function (e) {
-            var data =e.data;
+            var data = e.data;
+            console.log(data);
             switch (data.type) {
-                case 'loaddone':
-                    console.log( data.args);
+                case 'init':
+                    fetch(path).then(response => response.arrayBuffer())
+                        .then(buffer => {
+                            var req = {
+                                type: 'load',
+                                args: {
+                                    path: path,
+                                    frameRate: 25,
+                                    buffer: buffer
+                                }
+                            }
+                            ob.videoReaderWorker.postMessage(req, [req.args.buffer]);
+
+                        });
                     break;
-            
+                case 'loaded':
+                    var req = {
+                        type: 'next',
+                        args: {
+                            time: -1
+                        }
+                    }
+                    ob.videoReaderWorker.postMessage(req);
+                    _that._videoLoaded();
+                    break;
+                case 'renext':
+                    ob.frame = data.args.buffer;
+                    break;
                 default:
                     break;
             }
         };
-        fetch(path).then(response => response.arrayBuffer())
-            .then(buffer => {
-                
-                ob.video = buffer;
-                this._videoLoaded();
-            });
+
 
         return ob;
     }
 
     /**
-     * 加载图片的二进制数据，即ByteArrry
+     * 加载视频素材
      * @param {图片资源信息数组} assets 
      * @param {回调函数} cb 
      */
@@ -6020,7 +6040,7 @@ var VideoPreloader = (function () {
         var i = 0, len = this.videos.length;
         while (i < len) {
             if (this.videos[i].assetData === assetData) {
-                return this.videos[i].video;
+                return this.videos[i];
             }
             i += 1;
         }
@@ -8563,18 +8583,18 @@ SkiaCanvasRenderer.prototype.checkNumer = function (arr) {
 /**
  * 反转矩阵
  */
-SkiaCanvasRenderer.prototype.invert = function(m) {
-    var det = m[0]*m[4]*m[8] + m[1]*m[5]*m[6] + m[2]*m[3]*m[7]
-            - m[2]*m[4]*m[6] - m[1]*m[3]*m[8] - m[0]*m[5]*m[7];
+SkiaCanvasRenderer.prototype.invert = function (m) {
+    var det = m[0] * m[4] * m[8] + m[1] * m[5] * m[6] + m[2] * m[3] * m[7]
+        - m[2] * m[4] * m[6] - m[1] * m[3] * m[8] - m[0] * m[5] * m[7];
     if (!det) {
-      return SKIA.CanvasKit().SkMatrix.identity();
+        return SKIA.CanvasKit().SkMatrix.identity();
     }
     return [
-      (m[4]*m[8] - m[5]*m[7])/det, (m[2]*m[7] - m[1]*m[8])/det, (m[1]*m[5] - m[2]*m[4])/det,
-      (m[5]*m[6] - m[3]*m[8])/det, (m[0]*m[8] - m[2]*m[6])/det, (m[2]*m[3] - m[0]*m[5])/det,
-      (m[3]*m[7] - m[4]*m[6])/det, (m[1]*m[6] - m[0]*m[7])/det, (m[0]*m[4] - m[1]*m[3])/det,
+        (m[4] * m[8] - m[5] * m[7]) / det, (m[2] * m[7] - m[1] * m[8]) / det, (m[1] * m[5] - m[2] * m[4]) / det,
+        (m[5] * m[6] - m[3] * m[8]) / det, (m[0] * m[8] - m[2] * m[6]) / det, (m[2] * m[3] - m[0] * m[5]) / det,
+        (m[3] * m[7] - m[4] * m[6]) / det, (m[1] * m[6] - m[0] * m[7]) / det, (m[0] * m[4] - m[1] * m[3]) / det,
     ];
-  };
+};
 
 /**
  * 将当前转换重置为单位矩阵
@@ -8584,7 +8604,7 @@ SkiaCanvasRenderer.prototype.resetTransform = function () {
     mat = this.invert(mat);
     //(!mat) && (mat = SKIA.CanvasKit().SkMatrix.identity());
     this.skcanvas.concat(mat);
-    
+
 };
 
 /**
@@ -8856,13 +8876,16 @@ SkiaCanvasRenderer.prototype.renderFrame = function (num, forceRender) {
     if (!this.completeLayers) {
         this.checkLayers(num);
     }
-
+    var hasVideo = false;
     for (i = 0; i < len; i++) {
         if (this.completeLayers || this.elements[i]) {
             this.elements[i].prepareFrame(num - this.layers[i].st);
         }
+        if (this.layers[i].ty == 9) {
+            hasVideo = true;
+        }
     }
-    if (this.globalData._mdf) {
+    if (this.globalData._mdf || hasVideo) {
         if (this.renderConfig.clearCanvas === true) {
             this.clearRect(0, 0, this.transformCanvas.w, this.transformCanvas.h);
         } else {
@@ -13549,27 +13572,52 @@ SkiaTextElement.prototype.destroy = function () {
     this.textPaint.delete();
     this.textFont.delete();
 };
-function SkiaVideoElement(data,globalData,comp) {
+function SkiaVideoElement(data, globalData, comp) {
     this.videoData = globalData.getVideoData(data.refId);
     this.video = globalData.videoLoader.getVideo(this.videoData);
-    this.initElement(data,globalData,comp);
+    this.initElement(data, globalData, comp);
 }
 
-extendPrototype([BaseElement, TransformElement, SkiaBaseElement, HierarchyElement, FrameElement, RenderableElement],SkiaVideoElement);
+extendPrototype([BaseElement, TransformElement, SkiaBaseElement, HierarchyElement, FrameElement, RenderableElement], SkiaVideoElement);
 
 SkiaVideoElement.prototype.initElement = SVGShapeElement.prototype.initElement;
 SkiaVideoElement.prototype.prepareFrame = IImageElement.prototype.prepareFrame;
 
 SkiaVideoElement.prototype.createContent = function () {
-    
+    /* var req = {
+        type: 'next',
+        args: {
+            time: -1
+        }
+    }
+    this.video.videoReaderWorker.postMessage(req); */
 }
 
 SkiaVideoElement.prototype.renderInnerContent = function (parentMatrix) {
-    
+    console.log('render video');
+    if (this.video.frame) {
+        console.log(this.video);
+
+        // 视频帧brga => skimage => skia绘制
+        var frame = new Uint8Array(this.video.frame);
+        let skImg = SKIA.CanvasKit().MakeImage(frame,
+            this.videoData.w, this.videoData.h,
+            SKIA.CanvasKit().AlphaType.Unpremul,
+            SKIA.CanvasKit().ColorType.BGRA_8888);
+        this.skcanvas.drawImage(skImg, 0, 0, null);
+
+        var req = {
+            type: 'next',
+            args: {
+                time: -1
+            }
+        }
+        this.video.videoReaderWorker.postMessage(req);
+    }
 }
 
 SkiaVideoElement.prototype.destroy = function () {
-    
+
 }
 function SkiaEffects() {
 

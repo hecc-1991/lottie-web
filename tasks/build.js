@@ -880,17 +880,17 @@ function buildVersions(scripts) {
 		}
 
 		// 复制worker文件
-		var workerScript = [
-			'js/worker/VideoReaderWorker.js'
-		];
-		workerScript.forEach(script=>{
-			fs.copyFile(`${rootFolder}js/worker/VideoReaderWorker.js`,
-			`demo/video/VideoReaderWorker.js`,
-			function (err) {
-				if(err) console.log('something wrong was happened when copy file')
-				else console.log('copy file succeed');
-			});
-		});
+		//var workerScript = [
+		//	'js/worker/VideoReaderWorker.js'
+		//];
+		//workerScript.forEach(script=>{
+		//	fs.copyFile(`${rootFolder}js/worker/VideoReaderWorker.js`,
+		//	`demo/video/VideoReaderWorker.js`,
+		//	function (err) {
+		//		if(err) console.log('something wrong was happened when copy file')
+		//		else console.log('copy file succeed');
+		//	});
+		//});
 
 
 		const buildProcesses = versions.map((version) => {

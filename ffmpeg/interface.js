@@ -18,16 +18,7 @@ self.onmessage = function (e) {
                 blobs: [{ name: data.args.path, data: bb }]
             }, WORK_DIR);
             console.log(bb);
-            videoReader.load(WORK_DIR + '/' + data.args.path, data.args.frameRate);
-            break;
-        case 'loadFile':
-            videoReader = new VideoReaderWorker.VideoWorker();
-            FS.mkdir(WORK_DIR);
-            FS.mount(WORKERFS, {
-                files: [data.args.file]
-            }, WORK_DIR);
             var ret = videoReader.load(WORK_DIR + '/' + data.args.path, data.args.frameRate);
-            console.log(ret);
             if (ret == 0) {
                 var rep = {
                     type: 'loaded',
@@ -36,13 +27,28 @@ self.onmessage = function (e) {
                 self.postMessage(rep);
             }
             break;
-        case 'frame':
+        case 'loadFile':
+            videoReader = new VideoReaderWorker.VideoWorker();
+            FS.mkdir(WORK_DIR);
+            FS.mount(WORKERFS, {
+                files: [data.args.file]
+            }, WORK_DIR);
+            var ret = videoReader.load(WORK_DIR + '/' + data.args.path, data.args.frameRate);
+            if (ret == 0) {
+                var rep = {
+                    type: 'loaded',
+                    args: {}
+                };
+                self.postMessage(rep);
+            }
+            break;
+        case 'next':
             var size = videoReader.getSize();
             var tmp = VideoReaderWorker._malloc(size.width * size.height * 4);
             var dst = videoReader.readFrame(data.args.time, tmp);
             var buffer = dst.slice(0);
             var rep = {
-                type: 'framed',
+                type: 'renext',
                 args: { buffer: buffer.buffer }
             };
 
