@@ -15,10 +15,10 @@ function SkiaMaskElement(data,element,skcanvas){
     this.hasMasks = hasMasks;
     if(hasMasks) {
         this.element.addRenderableComponent(this);
+        var CK = SKIA.CanvasKit();
+        this.path = new CK.SkPath();
     }
 
-    var CK = SKIA.CanvasKit();
-    this.path = new CK.SkPath();
 }
 
 SkiaMaskElement.prototype.renderFrame = function () {
@@ -57,6 +57,8 @@ SkiaMaskElement.prototype.renderFrame = function () {
 SkiaMaskElement.prototype.getMaskProperty = MaskElement.prototype.getMaskProperty;
 
 SkiaMaskElement.prototype.destroy = function(){
-    this.path.delete();
+    if(hasMasks) {
+        this.path.delete();
+    }
     this.element = null;
 };
