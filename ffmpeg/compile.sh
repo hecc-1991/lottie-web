@@ -4,29 +4,37 @@ set -ex
 
 BASE_DIR=$(pwd)
 
+FFMPEG_DIR=ffmpeg
+
 EMCC=`which emcc`
 EMCXX=`which em++`
 EMAR=`which emar`
 
 BUILD_DIR=${BASE_DIR}/out
 
-
 mkdir -p $BUILD_DIR
 # sometimes the .a files keep old symbols around - cleaning them out makes sure
 # we get a fresh build.
 #rm -f $BUILD_DIR/*.*
 
-echo "Compiling bitcode"
+echo "Compiling ffmpeg"
 
+# 如果没下载ffmpeg，先下载
+# git clone https://git.ffmpeg.org/ffmpeg.git $FFMPEG_DIR
 
-#emconfigure ./configure --cc="emcc" --cxx="em++" ar="emar" \
-#	--enable-cross-compile --disable-ffmpeg \
-#	--disable-ffplay --disable-ffprobe \
-#	--disable-asm --disable-doc --disable-devices \
-#	--disable-pthreads --disable-w32threads \
-#	--disable-network --disable-hwaccels
-#
-#emmake make
+cd $FFMPEG_DIR
+emconfigure ./configure --cc="emcc" --cxx="em++" ar="emar" \
+	--enable-cross-compile --disable-ffmpeg \
+	--disable-ffplay --disable-ffprobe \
+	--disable-asm --disable-doc --disable-devices \
+	--disable-pthreads --disable-w32threads \
+	--disable-network --disable-hwaccels
+
+emmake make
+
+cd ..
+
+echo "Compiling codec"
 
 TUCODEC_SRC='
 ./tucodec/src/audio_stream.cc
@@ -51,13 +59,13 @@ TUCODEC_SRC='
 
 
 
-#${EMCXX} \
-#    -Itucodec/include \
-#    -I/home/tutu/hecc/env/FFmpeg \
-#    ${TUCODEC_SRC} \
-#    -std=c++17 \
-#    -s WASM=1 \
-#    -o $BUILD_DIR/videostream.bc
+${EMCXX} \
+    -Itucodec/include \
+    -I$FFMPEG_DIR \
+    ${TUCODEC_SRC} \
+    -std=c++17 \
+    -s WASM=1 \
+    -o $BUILD_DIR/videostream.bc
 
 #export EMCC_CLOSURE_ARGS="--externs $BASE_DIR/externs.js "
 
@@ -67,21 +75,20 @@ echo "Generating final wasm"
 # may drop symbols that it incorrectly thinks aren't used. One day,
 # Emscripten will use LLD, which may relax this requirement.
 
-#$BUILD_DIR/ffmpeg.bc \
 ${EMCXX} \
     -Itucodec/include \
-    -I/home/tutu/hecc/env/FFmpeg \
+    -I$FFMPEG_DIR \
     -std=c++17 \
     --bind \
 	  --pre-js $BASE_DIR/pre.js \
 	  --pre-js $BASE_DIR/interface.js \
 	  --pre-js $BASE_DIR/post.js \
     $BASE_DIR/videoreader_bindings.cpp \
-    $BUILD_DIR/libavcodec.a \
-    $BUILD_DIR/libavformat.a \
-    $BUILD_DIR/libavutil.a \
-    $BUILD_DIR/libswresample.a \
-    $BUILD_DIR/libswscale.a \
+    $FFMPEG_DIR/libavcodec/libavcodec.a \
+    $FFMPEG_DIR/libavutil/libavutil.a \
+    $FFMPEG_DIR/libavformat/libavformat.a \
+    $FFMPEG_DIR/libswresample/libswresample.a \
+    $FFMPEG_DIR/libswscale/libswscale.a \
     $BUILD_DIR/videostream.bc \
     -lworkerfs.js \
     -s ALLOW_MEMORY_GROWTH=1 \
